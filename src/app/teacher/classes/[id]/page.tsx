@@ -1,25 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Upload,
-  Users,
-  ArrowLeft,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Users, ArrowLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { ImportStudentsDialog } from "@/components/teacher/classes/import-students-dialog";
+import { StudentRoster } from "@/components/teacher/classes/student-roster";
 
 const PAGE_SIZE = 20;
 
@@ -51,9 +38,7 @@ export default async function ClassDetailPage({
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       orderBy: { student: { studentNo: "asc" } },
-      select: {
-        student: { select: { id: true, studentNo: true, name: true, createdAt: true } },
-      },
+      select: { student: { select: { id: true, studentNo: true, name: true } } },
     }),
   ]);
 
@@ -85,11 +70,7 @@ export default async function ClassDetailPage({
                 下载导入模板
               </a>
             </Button>
-            {/* 学生导入将在 S3 开放 */}
-            <Button disabled title="学生导入将在下一步（S3）开放">
-              <Upload className="size-4" />
-              导入学生
-            </Button>
+            <ImportStudentsDialog classId={classId} />
           </div>
         </div>
       </div>
@@ -101,33 +82,18 @@ export default async function ClassDetailPage({
           </div>
           <h3 className="text-lg font-semibold text-on-surface">班级暂无学生</h3>
           <p className="max-w-sm text-sm text-on-surface-variant">
-            点击「下载导入模板」，填写学号与姓名后即可在下一步批量导入。
+            点击「下载导入模板」，填写学号与姓名后用「导入学生」批量导入。
           </p>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-16">序号</TableHead>
-                <TableHead>学号</TableHead>
-                <TableHead>姓名</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map((s, i) => (
-                <TableRow key={s.id}>
-                  <TableCell className="text-on-surface-variant">
-                    {(page - 1) * PAGE_SIZE + i + 1}
-                  </TableCell>
-                  <TableCell className="font-medium tabular-nums">{s.studentNo}</TableCell>
-                  <TableCell>{s.name}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="flex flex-col gap-4">
+          <StudentRoster
+            classId={classId}
+            students={students}
+            startIndex={(page - 1) * PAGE_SIZE}
+          />
 
-          <div className="flex items-center justify-between border-t border-outline-variant/50 px-4 py-3 text-sm">
+          <div className="flex items-center justify-between text-sm">
             <span className="text-on-surface-variant">
               第 {page} / {totalPages} 页 · 共 {total} 人
             </span>
@@ -146,7 +112,7 @@ export default async function ClassDetailPage({
               />
             </div>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );
