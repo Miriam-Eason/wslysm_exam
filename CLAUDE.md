@@ -79,13 +79,13 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S1 完成，准备进入 S2
+**当前步骤**：✅ S2 完成，准备进入 S3
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
 - [x] **SD** 前端设计（改为手写 `design/学生端风格design.md`，放弃 Stitch；token 写入 `globals.css` 的 Tailwind v4 `@theme`）
 - [x] **S1** 鉴权系统（NextAuth **v5** 双身份 + 三套 login + `proxy.ts` 路由隔离 + `requireRole` 二次鉴权；18 项集成测试全过）
-- [ ] **S2** 班级管理
+- [x] **S2** 班级管理（班级 CRUD + 学生列表分页 + Excel 模板下载；教师端 Sidebar 框架 + shadcn 风格 UI 组件；20 项集成测试全过）
 - [ ] **S3** 学生导入
 - [ ] **S4** 题库 + 题目 CRUD
 - [ ] **S5** 题目导入
@@ -106,9 +106,12 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S1] **middleware 已按 Next16 改名为 `src/proxy.ts`**（PRD/目录建议里的 `middleware.ts` 以此为准）
 - [S1] 类型增强须改 `@auth/core/jwt`（非 `next-auth/jwt`，后者是纯再导出，增强不生效）
 - [S1] 登录无频率限制 + authorize 有账号枚举时序侧信道 → 留待登录加固时一并处理；`NEXTAUTH_SECRET` 生产需换随机值
+- [S2] **UI 组件为手写 shadcn 风格**（Radix + cva + 项目 token，在 `src/components/ui/`），非 shadcn CLI 生成——勿跑 `shadcn init`（会冲突 Tailwind v4 `@theme`）
+- [S2] **Excel 用 exceljs**（非 PRD 所列 SheetJS）——生成/解析统一一库；模板构建器在 `src/lib/templates/`
+- [S2] API 路由鉴权用 `requireApiRole(role)`（返回 401/403 JSON）；页面用 `requireRole`；响应统一走 `src/lib/api.ts` 的 ok/fail
 
 **下一步具体任务**：
-进入 **S2 班级管理**：班级 CRUD API（`/api/classes`，handler 内校验 `teacherId` 归属）+ 教师端 UI（列表/新建/改名/删除，删班级仅删 Enrollment/ExamClass 关联）+ 班内学生列表分页 + Excel 模板下载。鉴权可复用 `requireRole("teacher")` 与 `proxy.ts`。
+进入 **S3 学生导入**：`/api/classes/:id/students/preview`（dry-run 预检：可导入/已属别班跳过/姓名冲突/文件内重复/异常，各带行号，不写库）+ `/import`（createMany skipDuplicates + Enrollment + bcrypt 整批一次）+ 批量硬删 `DELETE /api/students`。复用 exceljs 解析与 `document/templates/学生导入示例数据.xlsx` 联调；导入逻辑严格按《学生导入方案设计》A 方案。
 
 ---
 
