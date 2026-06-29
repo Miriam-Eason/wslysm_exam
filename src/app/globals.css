@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ============================================================
+   设计令牌 —— 取自 design/学生端风格design.md（Serene Study / Apple 风格）
+   Tailwind v4 @theme：--color-X 自动生成 bg-X / text-X / border-X 等工具类
+   ============================================================ */
+@theme {
+  /* 表面与背景 */
+  --color-surface: #f9f9ff;
+  --color-surface-dim: #d8d9e5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f3fe;
+  --color-surface-container: #ecedf9;
+  --color-surface-container-high: #e6e8f3;
+  --color-surface-container-highest: #e0e2ed;
+
+  /* 文本 / 描边 */
+  --color-on-surface: #181c23;
+  --color-on-surface-variant: #414755;
+  --color-outline: #717786;
+  --color-outline-variant: #c1c6d7;
+  --color-inverse-surface: #2d3039;
+  --color-inverse-on-surface: #eef0fc;
+
+  /* 主色（iOS 系统蓝） */
+  --color-primary: #007aff;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e8f4ff;
+  --color-on-primary-container: #004493;
+
+  /* 次要色 */
+  --color-secondary: #575f66;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #dbe3eb;
+  --color-on-secondary-container: #40484e;
+
+  /* 语义色：成功 / 警告 / 危险 / 错误 */
+  --color-success: #34c759;
+  --color-on-success: #ffffff;
+  --color-success-container: #e8f8ee;
+  --color-warning: #ff9500;
+  --color-warning-container: #fff3e0;
+  --color-danger: #ff3b30;
+  --color-danger-container: #ffeceb;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* 语义圆角（保留 Tailwind 默认 rounded-* 不动） */
+  --radius-card: 1.5rem;
+  --radius-field: 1rem;
 }
 
+/* 字体：Inter（next/font 注入 --font-inter），CJK 回退 PingFang / 微软雅黑 */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans);
 }

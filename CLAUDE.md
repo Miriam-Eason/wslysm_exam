@@ -79,12 +79,12 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S0 完成，准备进入 SD
+**当前步骤**：✅ S1 完成，准备进入 S2
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
-- [ ] **SD** Stitch 设计（Apple风格，S0完成后约半天）
-- [ ] **S1** 鉴权系统（NextAuth 双身份 + 三套 login + middleware）
+- [x] **SD** 前端设计（改为手写 `design/学生端风格design.md`，放弃 Stitch；token 写入 `globals.css` 的 Tailwind v4 `@theme`）
+- [x] **S1** 鉴权系统（NextAuth **v5** 双身份 + 三套 login + `proxy.ts` 路由隔离 + `requireRole` 二次鉴权；18 项集成测试全过）
 - [ ] **S2** 班级管理
 - [ ] **S3** 学生导入
 - [ ] **S4** 题库 + 题目 CRUD
@@ -102,9 +102,13 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S0] Prisma 锁定在 6.x（CLI 会提示升 7，**不要升**，7 改了客户端生成器与 Docker 输出布局）
 - [S0] 用户主目录有游离的 `~/package-lock.json`，已用 next.config 的 turbopack.root 规避；如清理掉更干净
 - [S0] 学生默认密码已 bcrypt（admin123/teacher123 为开发账号，部署前需改）
+- [S1] **NextAuth 用 v5（Auth.js, beta）**，非 v4——API 与 v4 不同（`auth.ts` 导出 handlers/auth；split config）
+- [S1] **middleware 已按 Next16 改名为 `src/proxy.ts`**（PRD/目录建议里的 `middleware.ts` 以此为准）
+- [S1] 类型增强须改 `@auth/core/jwt`（非 `next-auth/jwt`，后者是纯再导出，增强不生效）
+- [S1] 登录无频率限制 + authorize 有账号枚举时序侧信道 → 留待登录加固时一并处理；`NEXTAUTH_SECRET` 生产需换随机值
 
 **下一步具体任务**：
-进入 SD（Stitch 设计）：用 `/generate-design` 出 4 个关键页面（登录页/学生做题页/学生考试列表/教师仪表盘，Apple 风格+圆角+毛玻璃）→ `/extract-design-md` 提取 DESIGN.md → token 写入 `tailwind.config` 与全局 CSS 变量。
+进入 **S2 班级管理**：班级 CRUD API（`/api/classes`，handler 内校验 `teacherId` 归属）+ 教师端 UI（列表/新建/改名/删除，删班级仅删 Enrollment/ExamClass 关联）+ 班内学生列表分页 + Excel 模板下载。鉴权可复用 `requireRole("teacher")` 与 `proxy.ts`。
 
 ---
 
