@@ -10,7 +10,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 const NAV = [
   { href: "/teacher", label: "仪表盘", icon: LayoutDashboard, ready: true },
   { href: "/teacher/classes", label: "班级管理", icon: Users, ready: true },
-  { href: "/teacher/banks", label: "题库管理", icon: BookOpen, ready: false },
+  { href: "/teacher/banks", label: "题库管理", icon: BookOpen, ready: true },
   { href: "/teacher/exams", label: "考试管理", icon: FileText, ready: false },
 ];
 

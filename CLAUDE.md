@@ -79,7 +79,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S3 完成，准备进入 S4
+**当前步骤**：✅ S4 完成，准备进入 S5
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -87,7 +87,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S1** 鉴权系统（NextAuth **v5** 双身份 + 三套 login + `proxy.ts` 路由隔离 + `requireRole` 二次鉴权；18 项集成测试全过）
 - [x] **S2** 班级管理（班级 CRUD + 学生列表分页 + Excel 模板下载；教师端 Sidebar 框架 + shadcn 风格 UI 组件；20 项集成测试全过）
 - [x] **S3** 学生导入（dry-run 预检 6 类 + 确认导入幂等 + 批量硬删/软删；exceljs 解析；23 项集成测试全过）
-- [ ] **S4** 题库 + 题目 CRUD
+- [x] **S4** 题库 + 题目 CRUD（题库 CRUD + 四题型表单 + type/difficulty 过滤分页 + contentHash 去重 409；15 项集成测试全过）
 - [ ] **S5** 题目导入
 - [ ] **S6** 组卷
 - [ ] **S7** 考试管理
@@ -111,9 +111,11 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S2] API 路由鉴权用 `requireApiRole(role)`（返回 401/403 JSON）；页面用 `requireRole`；响应统一走 `src/lib/api.ts` 的 ok/fail
 - [S3] 导入解析/预检核心在 `src/lib/import/student-import.ts`（preview 与 import 复用）；import 重新解析文件重跑分析，不信任客户端数据
 - [S3] **联调注意**：`db:seed` 不重置 MySQL 自增，reseed 后班级/教师 id 漂移；浏览器需重新登录（旧 JWT 的 teacherId 会失效致 404）
+- [S4] 题目校验/写入共享：`src/lib/validations/question.ts`（四题型 discriminatedUnion）、`src/lib/question-hash.ts`（contentHash）、`src/lib/question-data.ts`（buildQuestionData，选择题答案排序）；客户端安全常量在 `src/lib/question.ts`
+- [S4] 选择题答案入库前排序；判断 `["T"]/["F"]`；填空 `[["可接受1","可接受2"],...]`；去重冲突返回 409
 
 **下一步具体任务**：
-进入 **S4 题库 + 题目 CRUD**：题库 `GET/POST /api/banks`、`PATCH/DELETE /api/banks/:id`；题目 `GET /api/banks/:id/questions`（按 type/difficulty 过滤分页）、`POST` 单题、`PATCH/DELETE /api/questions/:id`。四题型表单，**options/answer 严格数组格式**（总表 §6：单选`["A"]`/多选`["A","C"]`/判断`["T"]`/填空 answer`[["北京","京城"],["上海"]]`）；contentHash 去重沿用 seed 口径，抽到 `src/lib/` 复用。
+进入 **S5 题目导入**：Excel 模板（四题型，含下拉数据校验）→ exceljs 解析 → 按题型 Zod 分流校验 → dry-run 预检（可导入/异常带行号/contentHash 查重）→ 确认导入 createMany(skipDuplicates) + importBatchId。复用 S3 dry-run 管线思路、`question-data`/`contentHash`、S2 的模板生成器模式。
 
 ---
 
