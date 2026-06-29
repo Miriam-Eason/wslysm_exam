@@ -1,0 +1,262 @@
+// 智慧题库与智能练测系统 — Prisma Schema
+// 权威定义见 document/数据模型总表.md，字段改动须同步该文档。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 枚举
+// ============================================================
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionType {
+  SINGLE_CHOICE // 单选
+  MULTIPLE_CHOICE // 多选
+  TRUE_FALSE // 判断
+  FILL_BLANK // 填空（一期，自动判分）
+  // SHORT_ANSWER 简答 —— 二期，需配人工批改流程
+}
+
+enum ExamType {
+  EXAM // 考试
+  PRACTICE // 练习
+}
+
+enum AttemptStatus {
+  IN_PROGRESS // 进行中（支持断点续答）
+  SUBMITTED // 已提交
+}
+
+// ============================================================
+// 身份与班级模块
+// ============================================================
+
+model Teacher {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique // 登录账号
+  passwordHash String // bcrypt 哈希，绝不存明文
+  name         String
+  isAdmin      Boolean  @default(false) // true = 超级管理员（不独立建表）
+  createdAt    DateTime @default(now())
+
+  classes       Class[]
+  questionBanks QuestionBank[]
+  exams         Exam[]
+}
+
+model Student {
+  id           Int       @id @default(autoincrement())
+  studentNo    String    @unique @db.VarChar(10) // 9-10位学号，全局唯一身份，String 防丢前导零
+  name         String
+  passwordHash String // 默认密码 wxls12345 的 bcrypt 哈希
+  mustResetPwd Boolean   @default(true) // 预留：是否仍用默认密码
+  deletedAt    DateTime? // 预留：软删除（一期不强制使用）
+  createdAt    DateTime  @default(now())
+
+  enrollments    Enrollment[]
+  attempts       Attempt[]
+  wrongQuestions WrongQuestion[]
+}
+
+model Class {
+  id        Int      @id @default(autoincrement())
+  name      String
+  teacherId Int // 创建教师
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  createdAt DateTime @default(now())
+
+  enrollments Enrollment[]
+  examClasses ExamClass[]
+}
+
+model Enrollment {
+  id        Int     @id @default(autoincrement())
+  studentId Int
+  classId   Int
+  // role   String  @default("regular") // 预留：竞赛班用 regular/contest 区分
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId]) // 同一人不在同一班重复登记
+  @@index([classId])
+}
+
+// ============================================================
+// 题库与题目模块（管理 / 编辑层）
+// ============================================================
+
+model QuestionBank {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?    @db.Text
+  subject     String? // 科目/课程（二期升级为独立课程表）
+  createdBy   Int // 创建教师 id
+  teacher     Teacher    @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  questions   Question[]
+}
+
+model Question {
+  id     Int          @id @default(autoincrement())
+  bankId Int
+  bank   QuestionBank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  type       QuestionType
+  stem       String       @db.Text // 题干；填空用占位符标空（如 ____ 或 {{1}}）
+  options    Json? // [{key:"A",text:"..."}]；判断/填空为 null
+  answer     Json // 一律数组化，见数据模型总表 §6
+  difficulty Difficulty   @default(MEDIUM)
+  analysis   String?      @db.Text
+
+  // 归属维度（一期平铺冗余 String，二期 knowledgePoint 升多对多）
+  textbook       String?
+  unit           String?
+  knowledgePoint String?
+
+  // 导入 / 运维字段
+  tags          String? // 预留：逗号分隔，后续升多对多
+  score         Int? // 预留：刷题不用，权威分值在 ExamQuestion
+  externalId    String? // 原始资料编号，支持"重导更新"
+  contentHash   String // 去重：题型+归一化题干+答案 的 SHA1
+  importBatchId String? // 导入批次，支持整批回滚
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  knowledgePoints QuestionKnowledgePoint[] // 二期
+
+  @@unique([bankId, contentHash]) // 库内去重；允许同题进多个题库
+  @@index([type])
+  @@index([difficulty])
+  @@index([importBatchId])
+}
+
+// ===== 以下为二期预留，一期先建表避免后续迁移 =====
+model KnowledgePoint {
+  id        Int                      @id @default(autoincrement())
+  name      String
+  questions QuestionKnowledgePoint[]
+}
+
+model QuestionKnowledgePoint {
+  questionId       Int
+  knowledgePointId Int
+  question         Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  knowledgePoint   KnowledgePoint @relation(fields: [knowledgePointId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, knowledgePointId])
+}
+
+// ============================================================
+// 考试 / 试卷模块（快照层）
+// ============================================================
+
+model Exam {
+  id               Int       @id @default(autoincrement())
+  name             String
+  type             ExamType
+  allowRepeat      Boolean   @default(false) // 是否可重复练习
+  repeatLimit      Int? // 可重做次数（null=不限）
+  deadline         DateTime? // 截止时间（可空）
+  timeLimitSec     Int? // 单次作答时长上限（秒），null=不限时
+  shuffleQuestions Boolean   @default(false)
+  shuffleOptions   Boolean   @default(false)
+  createdBy        Int
+  teacher          Teacher   @relation(fields: [createdBy], references: [id])
+  createdAt        DateTime  @default(now())
+  deletedAt        DateTime? // 已有作答时软删除
+
+  examQuestions ExamQuestion[]
+  classes       ExamClass[]
+  attempts      Attempt[]
+}
+
+model ExamQuestion {
+  id       Int   @id @default(autoincrement())
+  examId   Int
+  exam     Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sourceId Int? // 溯源原题 id（弱引用，原题删除不影响卷面）
+  order    Int
+  score    Float // 卷面级分值（权威分值）
+
+  // ↓ 组卷时从 Question 复制的快照字段 ↓
+  type     QuestionType
+  stem     String       @db.Text
+  options  Json?
+  answer   Json
+  analysis String?      @db.Text
+
+  answerItems    AnswerItem[]
+  wrongQuestions WrongQuestion[]
+}
+
+model ExamClass {
+  examId  Int
+  classId Int
+  exam    Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@id([examId, classId])
+}
+
+// ============================================================
+// 作答 / 成绩模块
+// ============================================================
+
+model Attempt {
+  id          Int           @id @default(autoincrement())
+  examId      Int
+  exam        Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId   Int
+  student     Student       @relation(fields: [studentId], references: [id], onDelete: Restrict) // 有作答禁止硬删学生
+  attemptNo   Int // 第几次作答，从 1 开始
+  status      AttemptStatus @default(IN_PROGRESS)
+  score       Float?
+  elapsedSec  Int           @default(0) // 已用时间（断点续答 / 考试计时）
+  startedAt   DateTime      @default(now())
+  lastSavedAt DateTime? // 最后一次草稿保存时间
+  submittedAt DateTime?
+
+  answerItems AnswerItem[]
+
+  @@unique([examId, studentId, attemptNo])
+}
+
+model AnswerItem {
+  id             Int          @id @default(autoincrement())
+  attemptId      Int
+  attempt        Attempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  examQuestionId Int
+  examQuestion   ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+  chosen         Json // 学生作答，结构同 answer（含填空数组）
+  isCorrect      Boolean      @default(false)
+  scoreGot       Float        @default(0)
+
+  @@index([examQuestionId])
+}
+
+model WrongQuestion {
+  id             Int          @id @default(autoincrement())
+  studentId      Int
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  examQuestionId Int // 指向快照，保证错题内容长期稳定
+  examQuestion   ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+  redoCount      Int          @default(0) // 重做次数
+  lastResult     Boolean? // 最近一次重做是否正确
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([studentId, examQuestionId])
+}

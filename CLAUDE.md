@@ -79,10 +79,10 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：尚未开始，准备进入 S0
+**当前步骤**：✅ S0 完成，准备进入 SD
 
 **进度概览**：
-- [ ] **S0** 脚手架 + Schema + Seed
+- [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
 - [ ] **SD** Stitch 设计（Apple风格，S0完成后约半天）
 - [ ] **S1** 鉴权系统（NextAuth 双身份 + 三套 login + middleware）
 - [ ] **S2** 班级管理
@@ -99,10 +99,12 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [ ] **S13** 部署上线
 
 **当前已知问题 / 暂缓事项**：
-_（每步完成后在此更新，格式：`- [Sxx] 描述`）_
+- [S0] Prisma 锁定在 6.x（CLI 会提示升 7，**不要升**，7 改了客户端生成器与 Docker 输出布局）
+- [S0] 用户主目录有游离的 `~/package-lock.json`，已用 next.config 的 turbopack.root 规避；如清理掉更干净
+- [S0] 学生默认密码已 bcrypt（admin123/teacher123 为开发账号，部署前需改）
 
 **下一步具体任务**：
-进入 S0：`npx create-next-app@latest` → 写 `prisma/schema.prisma`（按《数据模型总表》）→ `prisma migrate dev --name init` → 写 `prisma/seed.ts` → `prisma db seed`
+进入 SD（Stitch 设计）：用 `/generate-design` 出 4 个关键页面（登录页/学生做题页/学生考试列表/教师仪表盘，Apple 风格+圆角+毛玻璃）→ `/extract-design-md` 提取 DESIGN.md → token 写入 `tailwind.config` 与全局 CSS 变量。
 
 ---
 
