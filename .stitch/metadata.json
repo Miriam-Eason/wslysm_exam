@@ -1,0 +1,36 @@
+{
+  "projectId": "4027330513494201341",
+  "projectTitle": "智慧题库与智能练测系统",
+  "designSystemId": "assets/18049329842973961024",
+  "designSystemName": "智慧题库 · Apple-iOS Design System",
+  "screens": [
+    {
+      "id": "b58f91bf06e94aa9951294afe3048244",
+      "title": "登录页 — Unified Login",
+      "deviceType": "DESKTOP",
+      "screenshotFile": ".stitch/designs/login-screenshot.png",
+      "stitchUrl": "projects/4027330513494201341/screens/b58f91bf06e94aa9951294afe3048244"
+    },
+    {
+      "id": "a7ccaa99dd004187bae329851e29099a",
+      "title": "学生端 — 考试列表",
+      "deviceType": "MOBILE",
+      "screenshotFile": ".stitch/designs/student-exam-list-screenshot.png",
+      "stitchUrl": "projects/4027330513494201341/screens/a7ccaa99dd004187bae329851e29099a"
+    },
+    {
+      "id": "c9ae08ae2cae400baddb66e7a807d9c6",
+      "title": "学生端 — 做题页",
+      "deviceType": "MOBILE",
+      "screenshotFile": ".stitch/designs/student-question-screenshot.png",
+      "stitchUrl": "projects/4027330513494201341/screens/c9ae08ae2cae400baddb66e7a807d9c6"
+    }
+  ],
+  "pending": [
+    {
+      "title": "教师端 — 仪表盘",
+      "deviceType": "DESKTOP",
+      "status": "generation_timeout"
+    }
+  ]
+}
