@@ -1,8 +1,8 @@
 // 学生导入 dry-run 预检（PRD §11；不写库）
 import type { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { ok, fail } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
+import { loadClassForTeacher } from "@/lib/class-access";
 import { parseStudentSheet, analyzeStudentImport } from "@/lib/import/student-import";
 
 const MAX_FILE = 2 * 1024 * 1024; // 2MB
@@ -18,9 +18,9 @@ export async function POST(
   const classId = Number(id);
   if (!Number.isInteger(classId) || classId <= 0) return fail("VALIDATION", "无效的班级 ID");
 
-  const cls = await prisma.class.findUnique({ where: { id: classId } });
+  const cls = await loadClassForTeacher(classId, g.userId);
   if (!cls) return fail("NOT_FOUND", "班级不存在");
-  if (cls.teacherId !== g.userId) return fail("FORBIDDEN", "无权操作该班级");
+  if (!cls.teaches) return fail("FORBIDDEN", "你未授课该班级，无法导入");
 
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");

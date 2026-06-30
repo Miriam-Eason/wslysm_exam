@@ -45,6 +45,7 @@ async function main() {
   await prisma.knowledgePoint.deleteMany();
   await prisma.questionBank.deleteMany();
   await prisma.enrollment.deleteMany();
+  await prisma.classTeacher.deleteMany();
   await prisma.class.deleteMany();
   await prisma.student.deleteMany();
   await prisma.teacher.deleteMany();
@@ -68,6 +69,15 @@ async function main() {
   console.log("🏫 创建班级...");
   const class1 = await prisma.class.create({ data: { name: "高一(1)班", teacherId: teacher1.id } });
   const class2 = await prisma.class.create({ data: { name: "高一(2)班", teacherId: teacher1.id } });
+
+  // 授课关联：教师1 授课两个班（创建者）；教师2 也授课 高一(1)班（演示班级共享）
+  await prisma.classTeacher.createMany({
+    data: [
+      { classId: class1.id, teacherId: teacher1.id },
+      { classId: class2.id, teacherId: teacher1.id },
+      { classId: class1.id, teacherId: teacher2.id },
+    ],
+  });
 
   // ---------- 学生（默认密码整批只算一次哈希）----------
   console.log("🎓 创建 30 名学生...");

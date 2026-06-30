@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, fail, parsePagination } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
+import { loadClassForTeacher } from "@/lib/class-access";
 
 // GET /api/classes/:id/students?page&pageSize —— 班内学生分页列表
 export async function GET(
@@ -18,9 +19,9 @@ export async function GET(
     return fail("VALIDATION", "无效的班级 ID");
   }
 
-  const cls = await prisma.class.findUnique({ where: { id: classId } });
+  const cls = await loadClassForTeacher(classId, g.userId);
   if (!cls) return fail("NOT_FOUND", "班级不存在");
-  if (cls.teacherId !== g.userId) return fail("FORBIDDEN", "无权查看该班级");
+  if (!cls.teaches) return fail("FORBIDDEN", "你未授课该班级，请先在「班级列表」中添加");
 
   const { page, pageSize, skip, take } = parsePagination(req.nextUrl.searchParams);
 

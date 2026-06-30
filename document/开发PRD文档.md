@@ -69,10 +69,12 @@ exam-system/
 
 数据库设计**完整以《数据模型总表》为准**，此处只补充开发要点，不重复 schema。
 
-### 5. 模型清单（11 张表 + 4 枚举）
+### 5. 模型清单（12 张表 + 4 枚举）
 
-`Teacher`、`Student`、`Class`、`Enrollment`｜`QuestionBank`、`Question`、`KnowledgePoint`(二期)、`QuestionKnowledgePoint`(二期)｜`Exam`、`ExamQuestion`、`ExamClass`｜`Attempt`、`AnswerItem`、`WrongQuestion`。
+`Teacher`、`Student`、`Class`、`Enrollment`、`ClassTeacher`｜`QuestionBank`、`Question`、`KnowledgePoint`(二期)、`QuestionKnowledgePoint`(二期)｜`Exam`、`ExamQuestion`、`ExamClass`｜`Attempt`、`AnswerItem`、`WrongQuestion`。
 枚举：`Difficulty`、`QuestionType`、`ExamType`、`AttemptStatus`。
+
+> `ClassTeacher` 为班级共享重构新增（教师↔班级授课 M2M）；`Class.name` 全局唯一、`Class.teacherId`=创建者。详见《数据模型总表》§2.3/§2.5。
 
 ### 6. 关键约束与索引（开发时务必落实）
 

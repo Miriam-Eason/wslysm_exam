@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { ok, fail } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
+import { loadClassForTeacher } from "@/lib/class-access";
 import { DEFAULT_STUDENT_PASSWORD } from "@/lib/constants";
 import { parseStudentSheet, analyzeStudentImport } from "@/lib/import/student-import";
 
@@ -20,9 +21,9 @@ export async function POST(
   const classId = Number(id);
   if (!Number.isInteger(classId) || classId <= 0) return fail("VALIDATION", "无效的班级 ID");
 
-  const cls = await prisma.class.findUnique({ where: { id: classId } });
+  const cls = await loadClassForTeacher(classId, g.userId);
   if (!cls) return fail("NOT_FOUND", "班级不存在");
-  if (cls.teacherId !== g.userId) return fail("FORBIDDEN", "无权操作该班级");
+  if (!cls.teaches) return fail("FORBIDDEN", "你未授课该班级，无法导入");
 
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");

@@ -8,17 +8,19 @@ export default async function ClassesPage() {
   const session = await requireRole("teacher");
   const teacherId = Number(session.user.id);
 
+  // 我授课的班级（全校共享模型）
   const rows = await prisma.class.findMany({
-    where: { teacherId },
+    where: { teachers: { some: { teacherId } } },
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { enrollments: true } } },
+    include: { _count: { select: { enrollments: true } }, teacher: { select: { name: true } } },
   });
 
   const classes = rows.map((c) => ({
     id: c.id,
     name: c.name,
     studentCount: c._count.enrollments,
-    createdAt: c.createdAt.toISOString(),
+    creatorName: c.teacher.name,
+    isCreator: c.teacherId === teacherId,
   }));
 
   return (

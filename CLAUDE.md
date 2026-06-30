@@ -18,7 +18,7 @@
 
 | 文档 | 用途 |
 |---|---|
-| `document/数据模型总表.md` | **权威 Schema**（11张表+4枚举，遇字段冲突以此为准） |
+| `document/数据模型总表.md` | **权威 Schema**（12张表+4枚举，遇字段冲突以此为准） |
 | `document/开发PRD文档.md` | API 设计 / 页面逻辑 / 开发进程表 / 验收标准 |
 | `document/开发日志.md` | 每步详细记录（问题 + 解决方案 + 决策） |
 | `prisma/schema.prisma` | 数据库定义（严格按数据模型总表，不得自行增改字段） |
@@ -62,6 +62,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 | 8 | 去重键 | `@@unique([bankId, contentHash])`（库内去重，允许同题进多库） |
 | 9 | Nginx | 正式纳入 docker-compose，不再是可选 |
 | 10 | 默认密码 | `wxls12345`，导入时 bcrypt 整批算一次哈希 |
+| 11 | 班级共享 | 班级=全校实体，`name` 全局唯一；`Class.teacherId`=创建者（仅审计+改名/删班鉴权）；授课关系走 `ClassTeacher`(M2M)，"我授课的班级"=该表口径；查看/导入=授课老师，改名/删班/删学生=创建者+超管 |
 
 ---
 
@@ -113,6 +114,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S3] **联调注意**：`db:seed` 不重置 MySQL 自增，reseed 后班级/教师 id 漂移；浏览器需重新登录（旧 JWT 的 teacherId 会失效致 404）
 - [S4] 题目校验/写入共享：`src/lib/validations/question.ts`（四题型 discriminatedUnion）、`src/lib/question-hash.ts`（contentHash）、`src/lib/question-data.ts`（buildQuestionData，选择题答案排序）；客户端安全常量在 `src/lib/question.ts`
 - [S4] 选择题答案入库前排序；判断 `["T"]/["F"]`；填空 `[["可接受1","可接受2"],...]`；去重冲突返回 409
+- [班级共享重构] 新增 `ClassTeacher`(M2M 授课表) + `Class.name @unique`（migration `20260630120000_class_teaching_sharing`）；班级访问判定在 `src/lib/class-access.ts`（teaches/isCreator）；班级列表/加入授课接口 `GET /api/classes?scope=all`、`POST|DELETE /api/classes/:id/teachers`
 
 **下一步具体任务**：
 进入 **S5 题目导入**：Excel 模板（四题型，含下拉数据校验）→ exceljs 解析 → 按题型 Zod 分流校验 → dry-run 预检（可导入/异常带行号/contentHash 查重）→ 确认导入 createMany(skipDuplicates) + importBatchId。复用 S3 dry-run 管线思路、`question-data`/`contentHash`、S2 的模板生成器模式。

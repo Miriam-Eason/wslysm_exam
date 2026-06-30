@@ -50,7 +50,8 @@ model Teacher {
   isAdmin      Boolean  @default(false) // true = 超级管理员（不独立建表）
   createdAt    DateTime @default(now())
 
-  classes       Class[]
+  classes       Class[] // 我创建的班级（Class.teacherId）
+  teaching      ClassTeacher[] // 我授课的班级（M2M 关联）
   questionBanks QuestionBank[]
   exams         Exam[]
 }
@@ -71,13 +72,27 @@ model Student {
 
 model Class {
   id        Int      @id @default(autoincrement())
-  name      String
-  teacherId Int // 创建教师
+  name      String   @unique // 全校唯一（单校部署；多校化时升级为 @@unique([schoolId, name])）
+  teacherId Int // 创建该班级的老师（审计 + 改名/删班鉴权；不代表授课归属，授课见 ClassTeacher）
   teacher   Teacher  @relation(fields: [teacherId], references: [id])
   createdAt DateTime @default(now())
 
   enrollments Enrollment[]
   examClasses ExamClass[]
+  teachers    ClassTeacher[] // 授课教师（M2M）
+}
+
+// 教师↔班级「授课」关联（与 Enrollment 学生↔班级 平行）。
+// 班级为全校共享实体，任一教师可将已存在班级加入自己的授课列表。
+model ClassTeacher {
+  classId   Int
+  teacherId Int
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([classId, teacherId]) // 同一教师对同一班级只授课一次
+  @@index([teacherId])
 }
 
 model Enrollment {

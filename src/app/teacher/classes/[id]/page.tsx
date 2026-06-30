@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Users, ArrowLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth-guard";
+import { loadClassForTeacher } from "@/lib/class-access";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,8 +25,9 @@ export default async function ClassDetailPage({
   const classId = Number(id);
   if (!Number.isInteger(classId) || classId <= 0) notFound();
 
-  const cls = await prisma.class.findUnique({ where: { id: classId } });
-  if (!cls || cls.teacherId !== teacherId) notFound();
+  // 访问需「授课」该班；未授课的老师应先在「班级列表」中加入
+  const cls = await loadClassForTeacher(classId, teacherId);
+  if (!cls || !cls.teaches) notFound();
 
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
@@ -91,6 +93,7 @@ export default async function ClassDetailPage({
             classId={classId}
             students={students}
             startIndex={(page - 1) * PAGE_SIZE}
+            canDelete={cls.isCreator}
           />
 
           <div className="flex items-center justify-between text-sm">

@@ -8,10 +8,14 @@ export default async function TeacherDashboard() {
   const session = await requireRole("teacher");
   const teacherId = Number(session.user.id);
 
+  // 「我的班级」= 我授课的班级；学生总数 = 我授课班级内的去重学生
   const [classCount, studentCount] = await Promise.all([
-    prisma.class.count({ where: { teacherId } }),
+    prisma.class.count({ where: { teachers: { some: { teacherId } } } }),
     prisma.student.count({
-      where: { deletedAt: null, enrollments: { some: { class: { teacherId } } } },
+      where: {
+        deletedAt: null,
+        enrollments: { some: { class: { teachers: { some: { teacherId } } } } },
+      },
     }),
   ]);
 

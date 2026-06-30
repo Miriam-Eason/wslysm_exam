@@ -29,10 +29,12 @@ type Student = { id: number; studentNo: string; name: string };
 export function StudentRoster({
   students,
   startIndex,
+  canDelete,
 }: {
   classId: number;
   students: Student[];
   startIndex: number;
+  canDelete: boolean;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -85,7 +87,7 @@ export function StudentRoster({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest">
-      {selected.size > 0 && (
+      {canDelete && selected.size > 0 && (
         <div className="flex items-center justify-between border-b border-outline-variant/50 bg-primary-container/40 px-4 py-2.5">
           <span className="text-sm text-on-surface">已选 {selected.size} 名学生</span>
           <Button variant="destructive" size="sm" onClick={() => setConfirmOpen(true)}>
@@ -98,16 +100,18 @@ export function StudentRoster({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-12">
-              <input
-                ref={headerRef}
-                type="checkbox"
-                aria-label="全选本页"
-                checked={allChecked}
-                onChange={toggleAll}
-                className="size-4 accent-primary"
-              />
-            </TableHead>
+            {canDelete && (
+              <TableHead className="w-12">
+                <input
+                  ref={headerRef}
+                  type="checkbox"
+                  aria-label="全选本页"
+                  checked={allChecked}
+                  onChange={toggleAll}
+                  className="size-4 accent-primary"
+                />
+              </TableHead>
+            )}
             <TableHead className="w-16">序号</TableHead>
             <TableHead>学号</TableHead>
             <TableHead>姓名</TableHead>
@@ -116,15 +120,17 @@ export function StudentRoster({
         <TableBody>
           {students.map((s, i) => (
             <TableRow key={s.id} data-state={selected.has(s.id) ? "selected" : undefined}>
-              <TableCell>
-                <input
-                  type="checkbox"
-                  aria-label={`选择 ${s.name}`}
-                  checked={selected.has(s.id)}
-                  onChange={() => toggle(s.id)}
-                  className="size-4 accent-primary"
-                />
-              </TableCell>
+              {canDelete && (
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    aria-label={`选择 ${s.name}`}
+                    checked={selected.has(s.id)}
+                    onChange={() => toggle(s.id)}
+                    className="size-4 accent-primary"
+                  />
+                </TableCell>
+              )}
               <TableCell className="text-on-surface-variant">{startIndex + i + 1}</TableCell>
               <TableCell className="font-medium tabular-nums">{s.studentNo}</TableCell>
               <TableCell>{s.name}</TableCell>
