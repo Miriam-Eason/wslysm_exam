@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, MoreHorizontal, Pencil, Trash2, Check } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import {
   QuestionFormDialog,
   type EditableQuestion,
 } from "@/components/teacher/banks/question-form-dialog";
+import { ImportQuestionsDialog } from "@/components/teacher/banks/import-questions-dialog";
 import {
   QUESTION_TYPES,
   DIFFICULTIES,
@@ -130,10 +131,36 @@ export function QuestionList({
             ))}
           </select>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="size-4" />
-          新建题目
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const res = await fetch(`/api/banks/${bankId}/questions/template`);
+                if (!res.ok) { toast.error("模板下载失败"); return; }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                const cd = res.headers.get("content-disposition") ?? "";
+                const match = cd.match(/filename\*=UTF-8''(.+)/);
+                a.download = match ? decodeURIComponent(match[1]) : "题目导入模板.xlsx";
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                toast.error("模板下载失败");
+              }
+            }}
+          >
+            <Download className="size-4" />
+            下载模板
+          </Button>
+          <ImportQuestionsDialog bankId={bankId} />
+          <Button onClick={openCreate}>
+            <Plus className="size-4" />
+            新建题目
+          </Button>
+        </div>
       </div>
 
       {questions.length === 0 ? (

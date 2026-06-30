@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S4 完成，准备进入 S5
+**当前步骤**：✅ S5 完成，准备进入 S6
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -89,7 +89,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S2** 班级管理（班级 CRUD + 学生列表分页 + Excel 模板下载；教师端 Sidebar 框架 + shadcn 风格 UI 组件；20 项集成测试全过）
 - [x] **S3** 学生导入（dry-run 预检 6 类 + 确认导入幂等 + 批量硬删/软删；exceljs 解析；23 项集成测试全过）
 - [x] **S4** 题库 + 题目 CRUD（题库 CRUD + 四题型表单 + type/difficulty 过滤分页 + contentHash 去重 409；15 项集成测试全过）
-- [ ] **S5** 题目导入
+- [x] **S5** 题目导入（四题型 Excel 模板 + 解析 + Zod 分流校验 + dry-run 预检 + 确认导入 + contentHash 去重）
 - [ ] **S6** 组卷
 - [ ] **S7** 考试管理
 - [ ] **S8** 学生做题流程
@@ -117,7 +117,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [班级共享重构] 新增 `ClassTeacher`(M2M 授课表) + `Class.name @unique`（migration `20260630120000_class_teaching_sharing`）；班级访问判定在 `src/lib/class-access.ts`（teaches/isCreator）；班级列表/加入授课接口 `GET /api/classes?scope=all`、`POST|DELETE /api/classes/:id/teachers`
 
 **下一步具体任务**：
-进入 **S5 题目导入**：Excel 模板（四题型，含下拉数据校验）→ exceljs 解析 → 按题型 Zod 分流校验 → dry-run 预检（可导入/异常带行号/contentHash 查重）→ 确认导入 createMany(skipDuplicates) + importBatchId。复用 S3 dry-run 管线思路、`question-data`/`contentHash`、S2 的模板生成器模式。
+进入 **S6 组卷**：组卷向导 UI（基本信息→选题库→选班级→确认）；`$transaction` 快照（ExamQuestion createMany 复制内容）；整卷浏览 + 删题（操作快照）。
 
 ---
 
