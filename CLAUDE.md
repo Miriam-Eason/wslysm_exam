@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S5 完成，准备进入 S6
+**当前步骤**：✅ S6 完成，准备进入 S7
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -90,7 +90,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S3** 学生导入（dry-run 预检 6 类 + 确认导入幂等 + 批量硬删/软删；exceljs 解析；23 项集成测试全过）
 - [x] **S4** 题库 + 题目 CRUD（题库 CRUD + 四题型表单 + type/difficulty 过滤分页 + contentHash 去重 409；15 项集成测试全过）
 - [x] **S5** 题目导入（四题型 Excel 模板 + 解析 + Zod 分流校验 + dry-run 预检 + 确认导入 + contentHash 去重）
-- [ ] **S6** 组卷
+- [x] **S6** 组卷（组卷向导 4 步 UI + $transaction 快照 + 整卷浏览 + 删题快照 + 考试 CRUD API）
 - [ ] **S7** 考试管理
 - [ ] **S8** 学生做题流程
 - [ ] **S9** 答题 + 判分
@@ -115,9 +115,10 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S4] 题目校验/写入共享：`src/lib/validations/question.ts`（四题型 discriminatedUnion）、`src/lib/question-hash.ts`（contentHash）、`src/lib/question-data.ts`（buildQuestionData，选择题答案排序）；客户端安全常量在 `src/lib/question.ts`
 - [S4] 选择题答案入库前排序；判断 `["T"]/["F"]`；填空 `[["可接受1","可接受2"],...]`；去重冲突返回 409
 - [班级共享重构] 新增 `ClassTeacher`(M2M 授课表) + `Class.name @unique`（migration `20260630120000_class_teaching_sharing`）；班级访问判定在 `src/lib/class-access.ts`（teaches/isCreator）；班级列表/加入授课接口 `GET /api/classes?scope=all`、`POST|DELETE /api/classes/:id/teachers`
+- [S6] 组卷整库导入；`Prisma.DbNull` 处理 options 空字段（nullable JSON createMany 用法）；删题操作快照，原题库不受影响；删考试：无作答→硬删，有作答→软删（`deletedAt`）；新增 `src/components/ui/select.tsx` + `checkbox.tsx` 两个基础 UI 组件
 
 **下一步具体任务**：
-进入 **S6 组卷**：组卷向导 UI（基本信息→选题库→选班级→确认）；`$transaction` 快照（ExamQuestion createMany 复制内容）；整卷浏览 + 删题（操作快照）。
+进入 **S7 考试管理**：考试列表状态展示（已开始/截止/进行中）；改基本信息（已有 PATCH API）；软删除有作答考试（已有 DELETE API 含软删逻辑）；历史成绩可继续查看。
 
 ---
 
