@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>考试练习</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config from Brand Anchors -->
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {error: "#ba1a1a", primary: "#0058bc", "secondary-container": "#dbe3eb", "surface-container-highest": "#e0e2ed", "inverse-on-surface": "#eef0fc", "on-primary-fixed-variant": "#004493", "inverse-primary": "#adc6ff", "on-primary-fixed": "#001a41", "secondary-fixed-dim": "#bfc7cf", "surface-container": "#ecedf9", "tertiary-container": "#c64f00", "on-secondary-fixed-variant": "#40484e", "on-error": "#ffffff", secondary: "#575f66", "on-error-container": "#93000a", "surface-container-low": "#f1f3fe", "tertiary-fixed-dim": "#ffb595", "on-primary-container": "#fefcff", "outline-variant": "#c1c6d7", "on-primary": "#ffffff", "primary-container": "#0070eb", "on-tertiary-fixed-variant": "#7c2e00", "surface-bright": "#f9f9ff", background: "#f9f9ff", surface: "#f9f9ff", "on-secondary-container": "#5d656c", "on-secondary": "#ffffff", "primary-fixed": "#d8e2ff", "inverse-surface": "#2d3039", "secondary-fixed": "#dbe3eb", tertiary: "#9e3d00", "primary-fixed-dim": "#adc6ff", outline: "#717786", "surface-dim": "#d8d9e5", "on-tertiary": "#ffffff", "error-container": "#ffdad6", "surface-tint": "#005bc1", "surface-container-high": "#e6e8f3", "on-surface-variant": "#414755", "on-tertiary-container": "#fffbff", "on-secondary-fixed": "#151d22", "on-background": "#181c23", "tertiary-fixed": "#ffdbcc", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#351000", "on-surface": "#181c23", "surface-variant": "#e0e2ed"}, borderRadius: {DEFAULT: "1rem", lg: "2rem", xl: "3rem", full: "9999px"}, spacing: {"stack-gap": "16px", "max-width-desktop": "430px", "section-margin": "32px", "container-padding": "20px", base: "8px"}, fontFamily: {"body-md": ["Inter"], "headline-xl": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "label-caps": ["Inter"], "button-text": ["Inter"], headline: ["Inter"], display: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"body-md": ["17px", {lineHeight: "24px", fontWeight: "400"}], "headline-xl": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-sm": ["15px", {lineHeight: "20px", fontWeight: "400"}], "headline-lg": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg-mobile": ["22px", {lineHeight: "28px", fontWeight: "600"}], "label-caps": ["12px", {lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600"}], "button-text": ["17px", {lineHeight: "22px", fontWeight: "600"}]}}}};</script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f3fe; /* surface-container-low fallback */
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 122, 255, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(0, 122, 255, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c6d7; /* outline-variant */
+            border-radius: 4px;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px -1px rgba(0, 122, 255, 0.05);
+        }
+        
+        .option-input:checked + .option-label {
+            border-color: #007aff; /* primary */
+            background-color: rgba(0, 122, 255, 0.05); /* very light primary fill */
+        }
+        
+        .option-input:checked + .option-label .radio-indicator {
+            border-color: #007aff;
+        }
+        
+        .option-input:checked + .option-label .radio-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #007aff;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col items-center">
+<!-- TopAppBar Container (Mobile First Desktop Wrapper) -->
+<div class="fixed top-0 w-full z-50">
+<!-- TopAppBar Component -->
+<header class="bg-surface/70 dark:bg-surface-dim/70 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm border-b border-outline-variant/20">
+<div class="flex justify-between items-center px-container-padding h-14 w-full max-w-max-desktop mx-auto pt-safe">
+<button class="text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200 p-2 -ml-2 rounded-full focus:outline-none flex items-center gap-1">
+<span class="material-symbols-outlined text-[24px]" data-icon="arrow_back_ios_new">arrow_back_ios_new</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-semibold text-on-surface dark:text-on-surface flex-1 text-center truncate px-4 absolute left-1/2 -translate-x-1/2">
+                    考试练习
+                </h1>
+<button class="text-primary dark:text-primary-fixed font-button-text text-button-text hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200 py-2 px-3 -mr-3 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    交卷
+                </button>
+</div>
+</header>
+</div>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-max-desktop mx-auto pt-20 pb-32 px-container-padding flex-1 flex flex-col space-y-stack-gap">
+<!-- Progress Text -->
+<div class="flex justify-between items-center px-2">
+<span class="font-body-sm text-body-sm text-secondary">第 12 / 50 题</span>
+<span class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="timer">timer</span> 42:15
+            </span>
+</div>
+<!-- Exam Card -->
+<div class="glass-card rounded-[24px] p-6 flex flex-col space-y-section-margin relative overflow-hidden group">
+<!-- Question Content -->
+<div class="space-y-4"><div class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/5 border border-primary/10">
+<span class="text-primary font-medium text-[12px] leading-none">单选</span>
+</div>
+<h2 class="font-headline-lg-mobile text-[20px] leading-[28px] font-semibold text-on-surface">
+                    以下哪项是移动端 UI 设计中‘亲密性’原则的主要体现？
+                </h2>
+</div>
+<!-- Options Form -->
+<form aria-label="Exam Question Options" class="flex flex-col space-y-3 relative z-10">
+<!-- Option A -->
+<div class="relative">
+<input class="option-input peer sr-only" id="opt-a" name="q12" type="radio"/>
+<label class="option-label flex items-start gap-4 p-4 rounded-[16px] border border-outline-variant/30 cursor-pointer transition-all duration-200 hover:bg-surface-container-lowest/50 bg-surface-container-lowest/80 relative" for="opt-a">
+<div class="radio-indicator flex-shrink-0 w-6 h-6 rounded-full border border-outline-variant mt-0.5 relative transition-colors duration-200"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">A. 将逻辑相关的元素靠近排列，形成视觉单元。</span>
+</div>
+</label>
+</div>
+<!-- Option B -->
+<div class="relative">
+<input class="option-input peer sr-only" id="opt-b" name="q12" type="radio"/>
+<label class="option-label flex items-start gap-4 p-4 rounded-[16px] border border-outline-variant/30 cursor-pointer transition-all duration-200 hover:bg-surface-container-lowest/50 bg-surface-container-lowest/80 relative" for="opt-b">
+<div class="radio-indicator flex-shrink-0 w-6 h-6 rounded-full border border-outline-variant mt-0.5 relative transition-colors duration-200"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">B. 在页面所有元素之间使用完全相等的间距。</span>
+</div>
+</label>
+</div>
+<!-- Option C -->
+<div class="relative">
+<input class="option-input peer sr-only" id="opt-c" name="q12" type="radio"/>
+<label class="option-label flex items-start gap-4 p-4 rounded-[16px] border border-outline-variant/30 cursor-pointer transition-all duration-200 hover:bg-surface-container-lowest/50 bg-surface-container-lowest/80 relative" for="opt-c">
+<div class="radio-indicator flex-shrink-0 w-6 h-6 rounded-full border border-outline-variant mt-0.5 relative transition-colors duration-200"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">C. 增加背景图片的透明度以减少视觉干扰。</span>
+</div>
+</label>
+</div>
+<!-- Option D -->
+<div class="relative">
+<input class="option-input peer sr-only" id="opt-d" name="q12" type="radio"/>
+<label class="option-label flex items-start gap-4 p-4 rounded-[16px] border border-outline-variant/30 cursor-pointer transition-all duration-200 hover:bg-surface-container-lowest/50 bg-surface-container-lowest/80 relative" for="opt-d">
+<div class="radio-indicator flex-shrink-0 w-6 h-6 rounded-full border border-outline-variant mt-0.5 relative transition-colors duration-200"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">D. 仅使用高对比度的颜色来区分不同功能模块。</span>
+</div>
+</label>
+</div>
+</form>
+<!-- Subtle decor -->
+<div class="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl z-0 pointer-events-none"></div>
+</div>
+<!-- Helpful Tools row -->
+<div class="flex justify-end gap-2 px-2">
+<button aria-label="Flag for review" class="flex items-center gap-2 px-3 py-2 rounded-[12px] bg-surface-container/50 text-secondary hover:bg-surface-container transition-colors text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="flag">flag</span>
+                标记
+            </button>
+<button aria-label="Calculator" class="flex items-center gap-2 px-3 py-2 rounded-[12px] bg-surface-container/50 text-secondary hover:bg-surface-container transition-colors text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="calculate">calculate</span>
+                计算器
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Component Wrapper -->
+<div class="fixed bottom-0 w-full z-50 pointer-events-none">
+<!-- BottomNavBar Component - Modified to act as Exam Controls while keeping shell integrity -->
+<nav class="bg-surface/70 dark:bg-surface-dim/70 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-[24px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pointer-events-auto border-t border-outline-variant/20">
+<!-- Safe area padding container -->
+<div class="pb-safe">
+<div class="w-full max-w-max-desktop mx-auto flex justify-between items-center px-container-padding py-4">
+<!-- Previous Button -->
+<button aria-label="Previous Question" class="flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest/50 rounded-full transition-colors active:scale-90 duration-200 h-14 px-5 bg-surface-container-low border border-outline-variant/20">
+<span class="material-symbols-outlined mr-1 text-[20px]" data-icon="chevron_left">chevron_left</span>
+<span class="font-button-text text-[16px] font-medium">上一题</span>
+</button>
+<!-- Grid/Overview Button (Active in nav logic as we are in exam view) -->
+<button aria-label="Question Grid Overview" class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-highest/50 rounded-full transition-colors active:scale-90 duration-200 h-14 w-14">
+<span class="material-symbols-outlined text-[28px]" data-icon="grid_view">grid_view</span>
+</button>
+<!-- Next Button (Primary action styling for progression) -->
+<button aria-label="Next Question" class="flex items-center justify-center bg-primary text-white rounded-full transition-colors active:scale-90 duration-200 h-14 px-7 shadow-md">
+<span class="font-button-text text-[16px] font-semibold mr-1">下一题</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</nav>
+</div>
+</body></html>
