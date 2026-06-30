@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { StudentTabBar } from "@/components/student/student-tab-bar";
 
 interface ExamItem {
   id: number;
@@ -112,7 +113,7 @@ export function StudentExamList({ studentName }: { studentName: string }) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-5 py-4">
+      <main className="flex-1 px-5 pb-28 pt-4">
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map((i) => (
@@ -139,6 +140,8 @@ export function StudentExamList({ studentName }: { studentName: string }) {
           </div>
         )}
       </main>
+
+      <StudentTabBar />
     </div>
   );
 }
