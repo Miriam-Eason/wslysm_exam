@@ -3,6 +3,7 @@
 // 否则按 allowRepeat/repeatLimit 校验后新建 attemptNo。
 // 返回题目时绝不包含 answer 字段（安全约束）。
 import type { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ok, fail } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
@@ -168,17 +169,60 @@ export async function POST(
     return fail("FORBIDDEN", "已达到最大作答次数限制");
   }
 
-  // 5. 新建 Attempt
-  const attempt = await prisma.attempt.create({
-    data: {
-      examId,
-      studentId,
-      attemptNo: submittedCount + 1,
-      status: "IN_PROGRESS",
-      elapsedSec: 0,
-    },
-    select: { id: true },
-  });
+  // 5. 新建 Attempt（捕获并发竞争写入导致的唯一约束冲突 P2002）
+  let attempt: { id: number };
+  try {
+    attempt = await prisma.attempt.create({
+      data: {
+        examId,
+        studentId,
+        attemptNo: submittedCount + 1,
+        status: "IN_PROGRESS",
+        elapsedSec: 0,
+      },
+      select: { id: true },
+    });
+  } catch (e: unknown) {
+    // React StrictMode 在开发环境下会 double-invoke effect，导致两个并发 POST 同时
+    // 尝试 create，其中一个命中 @@unique([examId, studentId, attemptNo])，
+    // 此时将其降级为"断点续答"，直接返回另一请求已创建好的 IN_PROGRESS attempt。
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      const concurrent = await prisma.attempt.findFirst({
+        where: { examId, studentId, status: "IN_PROGRESS" },
+        select: {
+          id: true,
+          elapsedSec: true,
+          answerItems: { select: { examQuestionId: true, chosen: true } },
+        },
+      });
+      if (concurrent) {
+        const drafts: Record<number, unknown> = {};
+        for (const item of concurrent.answerItems) {
+          drafts[item.examQuestionId] = item.chosen;
+        }
+        const questions = buildQuestions(
+          exam.examQuestions,
+          exam.shuffleQuestions,
+          exam.shuffleOptions,
+          concurrent.id,
+        );
+        return ok({
+          attemptId: concurrent.id,
+          examId: exam.id,
+          examName: exam.name,
+          examType: exam.type,
+          timeLimitSec: exam.timeLimitSec,
+          elapsedSec: concurrent.elapsedSec,
+          questions,
+          drafts,
+        });
+      }
+    }
+    throw e;
+  }
 
   const questions = buildQuestions(
     exam.examQuestions,
