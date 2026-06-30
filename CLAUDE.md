@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S6 完成，准备进入 S7
+**当前步骤**：✅ S7 完成，准备进入 S8
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -91,7 +91,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S4** 题库 + 题目 CRUD（题库 CRUD + 四题型表单 + type/difficulty 过滤分页 + contentHash 去重 409；15 项集成测试全过）
 - [x] **S5** 题目导入（四题型 Excel 模板 + 解析 + Zod 分流校验 + dry-run 预检 + 确认导入 + contentHash 去重）
 - [x] **S6** 组卷（组卷向导 4 步 UI + $transaction 快照 + 整卷浏览 + 删题快照 + 考试 CRUD API）
-- [ ] **S7** 考试管理
+- [x] **S7** 考试管理（考试状态标签进行中/已截止；已下架考试折叠区 + 历史记录查看；仪表盘题库/考试真实计数；`GET /api/exams?archived=1`；软删后详情页只读模式）
 - [ ] **S8** 学生做题流程
 - [ ] **S9** 答题 + 判分
 - [ ] **S10** 结果 + 错题本
@@ -118,7 +118,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S6] 组卷整库导入；`Prisma.DbNull` 处理 options 空字段（nullable JSON createMany 用法）；删题操作快照，原题库不受影响；删考试：无作答→硬删，有作答→软删（`deletedAt`）；新增 `src/components/ui/select.tsx` + `checkbox.tsx` 两个基础 UI 组件
 
 **下一步具体任务**：
-进入 **S7 考试管理**：考试列表状态展示（已开始/截止/进行中）；改基本信息（已有 PATCH API）；软删除有作答考试（已有 DELETE API 含软删逻辑）；历史成绩可继续查看。
+进入 **S8 学生做题流程**：考试列表（Enrollment∩ExamClass + deadline 过滤，标注是否做过/剩余次数）；开始/续答（IN_PROGRESS 复用，恢复进度+elapsedSec）；题目展示（shuffle + 绝不下发 answer）。
 
 ---
 

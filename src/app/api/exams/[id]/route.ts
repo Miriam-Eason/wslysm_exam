@@ -5,7 +5,7 @@ import { ok, fail } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
 import { updateExamSchema } from "@/lib/validations/exam";
 
-async function getExam(id: number, teacherId: number) {
+async function getExamForWrite(id: number, teacherId: number) {
   return prisma.exam.findFirst({
     where: { id, createdBy: teacherId, deletedAt: null },
   });
@@ -22,8 +22,9 @@ export async function GET(
   const examId = Number(id);
   if (!Number.isFinite(examId)) return fail("VALIDATION", "无效的考试 ID");
 
+  // 允许查看已下架（软删除）考试，用于历史记录查看
   const exam = await prisma.exam.findFirst({
-    where: { id: examId, createdBy: g.userId, deletedAt: null },
+    where: { id: examId, createdBy: g.userId },
     include: {
       examQuestions: { orderBy: { order: "asc" } },
       classes: { include: { class: { select: { id: true, name: true } } } },
@@ -43,6 +44,7 @@ export async function GET(
     shuffleQuestions: exam.shuffleQuestions,
     shuffleOptions: exam.shuffleOptions,
     attemptCount: exam._count.attempts,
+    deletedAt: exam.deletedAt,
     classes: exam.classes.map((ec) => ({ id: ec.class.id, name: ec.class.name })),
     questions: exam.examQuestions.map((q) => ({
       id: q.id,
@@ -70,7 +72,7 @@ export async function PATCH(
   const examId = Number(id);
   if (!Number.isFinite(examId)) return fail("VALIDATION", "无效的考试 ID");
 
-  const exam = await getExam(examId, g.userId);
+  const exam = await getExamForWrite(examId, g.userId);
   if (!exam) return fail("NOT_FOUND", "考试不存在或无权访问");
 
   const body = await req.json().catch(() => null);

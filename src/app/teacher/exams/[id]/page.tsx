@@ -16,8 +16,9 @@ export default async function ExamDetailPage({
   const examId = Number(id);
   if (!Number.isFinite(examId)) notFound();
 
+  // 允许查看已下架考试（deletedAt 不限）
   const exam = await prisma.exam.findFirst({
-    where: { id: examId, createdBy: teacherId, deletedAt: null },
+    where: { id: examId, createdBy: teacherId },
     include: {
       examQuestions: { orderBy: { order: "asc" } },
       classes: { include: { class: { select: { id: true, name: true } } } },
@@ -50,6 +51,7 @@ export default async function ExamDetailPage({
       sourceId: q.sourceId,
     })),
     createdAt: exam.createdAt.toISOString(),
+    deletedAt: exam.deletedAt?.toISOString() ?? null,
   };
 
   return (

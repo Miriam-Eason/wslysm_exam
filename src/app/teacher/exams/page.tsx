@@ -8,28 +8,41 @@ export default async function ExamsPage() {
   const session = await requireRole("teacher");
   const teacherId = Number(session.user.id);
 
-  const rows = await prisma.exam.findMany({
-    where: { createdBy: teacherId, deletedAt: null },
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: { select: { examQuestions: true, attempts: true } },
-      classes: { include: { class: { select: { id: true, name: true } } } },
-    },
-  });
+  const [activeRows, archivedRows] = await Promise.all([
+    prisma.exam.findMany({
+      where: { createdBy: teacherId, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { examQuestions: true, attempts: true } },
+        classes: { include: { class: { select: { id: true, name: true } } } },
+      },
+    }),
+    prisma.exam.findMany({
+      where: { createdBy: teacherId, deletedAt: { not: null } },
+      orderBy: { deletedAt: "desc" },
+      include: {
+        _count: { select: { examQuestions: true, attempts: true } },
+        classes: { include: { class: { select: { id: true, name: true } } } },
+      },
+    }),
+  ]);
 
-  const exams = rows.map((e) => ({
-    id: e.id,
-    name: e.name,
-    type: e.type as "EXAM" | "PRACTICE",
-    allowRepeat: e.allowRepeat,
-    repeatLimit: e.repeatLimit,
-    deadline: e.deadline?.toISOString() ?? null,
-    timeLimitSec: e.timeLimitSec,
-    questionCount: e._count.examQuestions,
-    attemptCount: e._count.attempts,
-    classes: e.classes.map((ec) => ({ id: ec.class.id, name: ec.class.name })),
-    createdAt: e.createdAt.toISOString(),
-  }));
+  function mapExam(e: typeof activeRows[0]) {
+    return {
+      id: e.id,
+      name: e.name,
+      type: e.type as "EXAM" | "PRACTICE",
+      allowRepeat: e.allowRepeat,
+      repeatLimit: e.repeatLimit,
+      deadline: e.deadline?.toISOString() ?? null,
+      timeLimitSec: e.timeLimitSec,
+      questionCount: e._count.examQuestions,
+      attemptCount: e._count.attempts,
+      classes: e.classes.map((ec) => ({ id: ec.class.id, name: ec.class.name })),
+      createdAt: e.createdAt.toISOString(),
+      deletedAt: e.deletedAt?.toISOString() ?? null,
+    };
+  }
 
   return (
     <div className="flex flex-col gap-7">
@@ -39,7 +52,7 @@ export default async function ExamsPage() {
           创建考试或练习；从题库整库组卷，生成快照后原题改动不影响试卷。
         </p>
       </header>
-      <ExamList exams={exams} />
+      <ExamList exams={activeRows.map(mapExam)} archivedExams={archivedRows.map(mapExam)} />
     </div>
   );
 }

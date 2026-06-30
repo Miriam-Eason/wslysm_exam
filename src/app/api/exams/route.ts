@@ -6,12 +6,17 @@ import { ok, fail } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
 import { createExamSchema } from "@/lib/validations/exam";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const g = await requireApiRole("teacher");
   if (g.error) return g.error;
 
+  const archived = req.nextUrl.searchParams.get("archived") === "1";
+
   const exams = await prisma.exam.findMany({
-    where: { createdBy: g.userId, deletedAt: null },
+    where: {
+      createdBy: g.userId,
+      deletedAt: archived ? { not: null } : null,
+    },
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { examQuestions: true, attempts: true } },
@@ -34,6 +39,7 @@ export async function GET() {
       attemptCount: e._count.attempts,
       classes: e.classes.map((ec) => ({ id: ec.class.id, name: ec.class.name })),
       createdAt: e.createdAt,
+      deletedAt: e.deletedAt,
     })),
   );
 }

@@ -9,7 +9,7 @@ export default async function TeacherDashboard() {
   const teacherId = Number(session.user.id);
 
   // 「我的班级」= 我授课的班级；学生总数 = 我授课班级内的去重学生
-  const [classCount, studentCount] = await Promise.all([
+  const [classCount, studentCount, bankCount, examCount] = await Promise.all([
     prisma.class.count({ where: { teachers: { some: { teacherId } } } }),
     prisma.student.count({
       where: {
@@ -17,13 +17,15 @@ export default async function TeacherDashboard() {
         enrollments: { some: { class: { teachers: { some: { teacherId } } } } },
       },
     }),
+    prisma.questionBank.count({ where: { createdBy: teacherId } }),
+    prisma.exam.count({ where: { createdBy: teacherId, deletedAt: null } }),
   ]);
 
   const stats = [
     { label: "我的班级", value: classCount, icon: Users, href: "/teacher/classes", accent: true },
     { label: "学生总数", value: studentCount, icon: GraduationCap, href: "/teacher/classes", accent: true },
-    { label: "题库", value: "—", icon: BookOpen, href: null, accent: false },
-    { label: "考试 / 练习", value: "—", icon: FileText, href: null, accent: false },
+    { label: "题库", value: bankCount, icon: BookOpen, href: "/teacher/banks", accent: true },
+    { label: "考试 / 练习", value: examCount, icon: FileText, href: "/teacher/exams", accent: true },
   ];
 
   return (
@@ -64,14 +66,10 @@ export default async function TeacherDashboard() {
               <p className="mt-1 text-sm text-on-surface-variant">{s.label}</p>
             </Card>
           );
-          return s.href ? (
+          return (
             <Link key={s.label} href={s.href} className="block">
               {body}
             </Link>
-          ) : (
-            <div key={s.label} className="opacity-70">
-              {body}
-            </div>
           );
         })}
       </section>

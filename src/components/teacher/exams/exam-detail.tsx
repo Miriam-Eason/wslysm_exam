@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Pencil, Trash2, X, ArrowLeft, Clock, Users,
-  RotateCcw, Shuffle, ChevronDown, ListOrdered,
+  RotateCcw, Shuffle, ChevronDown, ListOrdered, Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +68,7 @@ type Exam = {
   classes: ClassInfo[];
   questions: Question[];
   createdAt: string;
+  deletedAt: string | null;
 };
 
 type EditForm = {
@@ -91,6 +92,7 @@ export function ExamDetail({ exam: initial }: { exam: Exam }) {
   const [deleteExamOpen, setDeleteExamOpen] = useState(false);
   const [deleteQTarget, setDeleteQTarget] = useState<Question | null>(null);
   const [busy, setBusy] = useState(false);
+  const isArchived = !!exam.deletedAt;
 
   const initDeadline = initial.deadline ? new Date(initial.deadline).toISOString().slice(0, 16) : "";
   const [editForm, setEditForm] = useState<EditForm>({
@@ -189,17 +191,30 @@ export function ExamDetail({ exam: initial }: { exam: Exam }) {
           <ArrowLeft className="size-4" />
           返回列表
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="size-4" />
-            编辑信息
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteExamOpen(true)}>
-            <Trash2 className="size-4" />
-            删除考试
-          </Button>
-        </div>
+        {!isArchived && (
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="size-4" />
+              编辑信息
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setDeleteExamOpen(true)}>
+              <Trash2 className="size-4" />
+              删除考试
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* 已下架提示 */}
+      {isArchived && (
+        <div className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container px-5 py-3.5 text-sm text-on-surface-variant">
+          <Archive className="size-4 shrink-0" />
+          <span>
+            该考试已于 {exam.deletedAt ? new Date(exam.deletedAt).toLocaleString("zh-CN") : ""} 下架（软删除），
+            学生无法访问，历史作答数据完整保留。
+          </span>
+        </div>
+      )}
 
       {/* 考试信息卡 */}
       <div className="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
@@ -304,14 +319,16 @@ export function ExamDetail({ exam: initial }: { exam: Exam }) {
                     <p className="mt-1.5 text-sm text-on-surface line-clamp-3">{q.stem}</p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setDeleteQTarget(q)}
-                    title="从试卷移除"
-                    className="shrink-0 rounded-lg p-1.5 text-on-surface-variant/60 transition hover:bg-danger-container hover:text-danger"
-                  >
-                    <X className="size-4" />
-                  </button>
+                  {!isArchived && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteQTarget(q)}
+                      title="从试卷移除"
+                      className="shrink-0 rounded-lg p-1.5 text-on-surface-variant/60 transition hover:bg-danger-container hover:text-danger"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  )}
                 </div>
               ))
             )}
