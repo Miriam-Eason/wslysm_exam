@@ -32,12 +32,15 @@ export default auth((req) => {
   const isLoginPage = pathname === area.login;
 
   if (isLoginPage) {
-    // 任何已登录用户访问任意登录页 → 回各自首页（与下方跨角色保护页逻辑对称，
-    // 避免给已登录的教师展示 /admin/login 等异区门户）
-    if (role) {
+    // forceSignIn=1 由服务端校验发现 JWT 中的 userId 已失效（如 reseed 后 ID 漂移）时附加，
+    // 此时需让用户直接看到登录页完成重新认证，不做"已登录→回首页"的自动跳转。
+    const forceSignIn = req.nextUrl.searchParams.get("forceSignIn");
+    if (role && !forceSignIn) {
+      // 任何已登录用户访问任意登录页 → 回各自首页（与下方跨角色保护页逻辑对称，
+      // 避免给已登录的教师展示 /admin/login 等异区门户）
       return NextResponse.redirect(new URL(homeForRole(role), req.nextUrl));
     }
-    return NextResponse.next(); // 未登录，允许查看登录页
+    return NextResponse.next(); // 未登录，或强制重认证，允许查看登录页
   }
 
   // 受保护页面：未登录 → 跳本区域登录页（带 callbackUrl 回跳）

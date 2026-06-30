@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import type { Role } from "@/lib/validations/auth";
 
@@ -22,7 +21,6 @@ export function LoginForm({
   homePath,
   accentClassName = "bg-primary hover:bg-primary/90 focus-visible:outline-primary",
 }: Props) {
-  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +47,10 @@ export function LoginForm({
       const cb = new URLSearchParams(window.location.search).get("callbackUrl");
       const safe = cb && (cb === homePath || cb.startsWith(homePath + "/"));
       const target = safe ? cb : homePath;
-      router.push(target);
-      router.refresh();
+      // 使用硬跳转而非 router.push + router.refresh：
+      // router.push 可能命中 Router Cache 的旧 RSC payload；router.refresh 只刷新当前页(登录页)
+      // 而非目标页，无法使目标路由的缓存失效，导致首次登录偶现数据为 0 的问题。
+      window.location.href = target;
     } catch {
       setError("登录失败，请稍后重试");
       setLoading(false);
