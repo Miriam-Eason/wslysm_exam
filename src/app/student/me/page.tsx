@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ChangePasswordDialog } from "@/components/student/change-password-dialog";
 import { StudentTabBar } from "@/components/student/student-tab-bar";
 
 export default async function StudentMePage() {
@@ -114,9 +115,14 @@ export default async function StudentMePage() {
           </p>
         </div>
 
-        {/* Sign out */}
-        <div className="flex justify-center">
-          <SignOutButton redirectTo="/student/login" />
+        {/* Account actions */}
+        <div className="flex flex-col gap-3">
+          <ChangePasswordDialog />
+          <SignOutButton
+            redirectTo="/student/login"
+            className="flex h-14 w-full items-center justify-center rounded-2xl text-[17px] font-semibold transition active:scale-[0.98]"
+            style={{ background: "rgba(120,120,128,0.12)", color: "#ff3b30" }}
+          />
         </div>
       </main>
 
