@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S11 完成，准备进入 S12
+**当前步骤**：✅ S12 完成，准备进入 S13
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -96,7 +96,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S9** 错题本（`GET /api/student/wrong-questions` 按考试分组；`POST /api/student/wrong-questions/:id/redo` 重做判分；`/student/wrong` 错题本页（记忆模式+重做模式）；`/student/me` 我的页面；底部 Tab Bar 三入口）
 - [x] **S10** 结果 + 错题本（PRD 定义的结果页/错题本/记忆重做模式已在 S8/S9 提前实现，此处补记）
 - [x] **S11** 成绩统计（`GET /api/exams/:id/stats` 平均分/及格率/最高低分/分数段/每题准确率+选项选择率；`GET /api/exams/:id/students/:studentId` 按学生下钻；`/teacher/exams/:id/stats` 页面）
-- [ ] **S12** 超管面板
+- [x] **S12** 超管面板（`/admin` 教师账号 CRUD + 学生账号 CRUD/批量导入/软硬删 + 只读数据浏览三表；`/api/admin/*`）
 - [ ] **S13** 部署上线
 
 **当前已知问题 / 暂缓事项**：
@@ -122,9 +122,14 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S11] 统计聚合口径与 PRD §7-22 一致：取每生最近一次 `SUBMITTED` Attempt（按 `attemptNo` 取最大）参与平均分/分段/准确率/选项选择率；聚合逻辑集中在 `src/lib/stats.ts`（`getExamStats` + `getStudentLatestAttemptDetail`），API 与 Server Component 页面共用同一份逻辑，页面直调 lib 免一次网络往返，仅按学生下钻走 Dialog 内 `fetch`
 - [S11] 图表未引入 recharts（PRD 提及但项目未装且无既有图表组件），改为手写 SVG/CSS 条形图与百分比进度条，风格与结果页的手写评分圆环保持一致，避免引入新依赖与默认图表样式割裂
 - [S11] 分数段固定按满分百分比分 5 档（<60/60-69/70-79/80-89/90-100），不随满分数值变化；`optionRates` 仅对 SINGLE_CHOICE/MULTIPLE_CHOICE 计算，依据 submit 时"每题必写 AnswerItem"的保证，分母=已提交人数
+- [S12] 教师 CRUD：`src/lib/validations/teacher.ts` + `/api/admin/teachers`、`/api/admin/teachers/:id`；删除前置校验该教师是否创建过班级/题库/考试（`Class.teacherId`/`QuestionBank.createdBy`/`Exam.createdBy` 均为 FK Restrict，无法级联硬删，需先转移/清理），并禁止自我删除与自我取消超管权限
+- [S12] 学生 CRUD + 批量导入：`src/lib/validations/admin-student.ts` + `/api/admin/students`、`/api/admin/students/:id`；批量删除复用「有作答→软删/无作答→硬删」逻辑但不受教师归属限制；批量导入新增 `/api/admin/students/import/preview`、`/api/admin/students/import` 两个平行路由，直接复用 `src/lib/import/student-import.ts` 底层函数（`parseStudentSheet`/`analyzeStudentImport`），超管选目标班级导入，不受教师侧「授课关系」限制
+- [S12] `/api/students/template`（导入模板下载）原仅限 teacher 角色，已放宽为 teacher/admin 均可访问
+- [S12] 只读数据浏览（`/admin/browse`）未做通用表格引擎，Classes/QuestionBanks/Exams 三表各自手写查询+列，Server Component 直查 Prisma，无独立只读 API
+- [S12] 页面：`src/app/admin/layout.tsx`+`src/components/admin/sidebar.tsx`（仿教师端）；`/admin/teachers`+`teacher-table`/`teacher-form-dialog`；`/admin/students`+`student-table`/`student-form-dialog`/`import-dialog`
 
 **下一步具体任务**：
-进入 **S12 超管面板**：Admin（`Teacher.isAdmin=true`）专属路由 `/admin`；教师账号 CRUD；学生账号 CRUD + 批量导入（复用现有导入管线）；各表只读浏览。
+进入 **S13 部署上线**：Docker Compose（app + db + nginx）生产环境验证；`docker compose exec app npx prisma migrate deploy`；部署前需将开发账号明文密码（admin123/teacher123）与 `NEXTAUTH_SECRET` 换成生产随机值。
 
 ---
 

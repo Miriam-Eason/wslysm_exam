@@ -1,10 +1,14 @@
-// 学生导入模板下载（PRD S2「Excel 模板下载」）
-import { requireApiRole } from "@/lib/auth-guard";
+// 学生导入模板下载（PRD S2「Excel 模板下载」；教师端 + 超管端共用）
+import { auth } from "@/auth";
+import { fail } from "@/lib/api";
 import { buildStudentImportWorkbook } from "@/lib/templates/student-import";
 
 export async function GET() {
-  const g = await requireApiRole("teacher");
-  if (g.error) return g.error;
+  const session = await auth();
+  if (!session?.user) return fail("UNAUTHORIZED", "未登录或会话已失效");
+  if (session.user.role !== "teacher" && session.user.role !== "admin") {
+    return fail("FORBIDDEN", "无权访问该资源");
+  }
 
   const wb = buildStudentImportWorkbook();
   const buf = await wb.xlsx.writeBuffer();
