@@ -89,6 +89,7 @@ export async function GET(_req: NextRequest) {
         remaining,
         latestScore: latestSubmitted?.score ?? null,
         latestAttemptId: latestSubmitted?.id ?? null,
+        completedAt: latestSubmitted?.submittedAt ?? null,
         createdAt: e.createdAt,
       };
     }),

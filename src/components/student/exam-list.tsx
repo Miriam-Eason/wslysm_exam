@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { StudentTabBar } from "@/components/student/student-tab-bar";
 
 interface ExamItem {
@@ -21,6 +20,7 @@ interface ExamItem {
   remaining: number | null;
   latestScore: number | null;
   latestAttemptId: number | null;
+  completedAt: string | null;
   createdAt: string;
 }
 
@@ -38,6 +38,22 @@ function formatDeadline(iso: string): string {
 function formatTimeLimit(sec: number): string {
   const m = Math.floor(sec / 60);
   return m < 60 ? `${m} 分钟` : `${Math.floor(m / 60)} 小时 ${m % 60 ? (m % 60) + " 分" : ""}`;
+}
+
+function formatCompletedAt(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (d.getFullYear() !== now.getFullYear()) {
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${time} 完成`;
+  }
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) return `今天 ${time} 完成`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return `昨天 ${time} 完成`;
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${time} 完成`;
 }
 
 export function StudentExamList({ studentName }: { studentName: string }) {
@@ -86,16 +102,13 @@ export function StudentExamList({ studentName }: { studentName: string }) {
           borderColor: "rgba(193,198,215,0.3)",
         }}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-primary opacity-70">
-              学生端
-            </p>
-            <h1 className="mt-0.5 text-[22px] font-semibold leading-7 text-on-surface">
-              你好，{studentName}
-            </h1>
-          </div>
-          <SignOutButton redirectTo="/student/login" />
+        <div>
+          <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-primary opacity-70">
+            学生端
+          </p>
+          <h1 className="mt-0.5 text-[22px] font-semibold leading-7 text-on-surface">
+            你好，{studentName}
+          </h1>
         </div>
 
         {/* Tabs */}
@@ -254,25 +267,36 @@ function ExamCard({
             <QuestionIcon />
             {exam.questionCount} 题
           </span>
-          {exam.timeLimitSec && (
-            <span className="flex items-center gap-1">
-              <TimerIcon />
-              {formatTimeLimit(exam.timeLimitSec)}
-            </span>
-          )}
-          {exam.deadline && (
-            <span
-              className="flex items-center gap-1"
-              style={{
-                color:
-                  new Date(exam.deadline).getTime() - Date.now() < 86400000
-                    ? "#ff3b30"
-                    : undefined,
-              }}
-            >
-              <CalendarIcon />
-              {formatDeadline(exam.deadline)}
-            </span>
+          {exam.status === "SUBMITTED" ? (
+            exam.completedAt && (
+              <span className="flex items-center gap-1">
+                <CheckIcon />
+                {formatCompletedAt(exam.completedAt)}
+              </span>
+            )
+          ) : (
+            <>
+              {exam.deadline && (
+                <span
+                  className="flex items-center gap-1"
+                  style={{
+                    color:
+                      new Date(exam.deadline).getTime() - Date.now() < 86400000
+                        ? "#ff3b30"
+                        : undefined,
+                  }}
+                >
+                  <CalendarIcon />
+                  {formatDeadline(exam.deadline)}
+                </span>
+              )}
+              {exam.timeLimitSec && (
+                <span className="flex items-center gap-1">
+                  <TimerIcon />
+                  {formatTimeLimit(exam.timeLimitSec)}
+                </span>
+              )}
+            </>
           )}
           {exam.allowRepeat && exam.remaining !== null && (
             <span className="flex items-center gap-1">
@@ -328,6 +352,14 @@ function CalendarIcon() {
   return (
     <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
       <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+    </svg>
+  );
+}
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>
+      <path d="M10.97 4.97a.235.235 0 0 1 .02-.022c.183-.183.5-.03.457.212a.234.234 0 0 1-.06.114l-3.71 5.19a.5.5 0 0 1-.723.024L5.169 8.616a.5.5 0 0 1 .707-.707l1.586 1.586 3.508-4.525z"/>
     </svg>
   );
 }
