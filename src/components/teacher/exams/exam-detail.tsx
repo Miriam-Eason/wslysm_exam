@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Pencil, Trash2, X, ArrowLeft, Clock, Users,
-  RotateCcw, Shuffle, ChevronDown, ListOrdered, Archive,
+  RotateCcw, Shuffle, ChevronDown, ListOrdered, Archive, BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,18 +191,26 @@ export function ExamDetail({ exam: initial }: { exam: Exam }) {
           <ArrowLeft className="size-4" />
           返回列表
         </Button>
-        {!isArchived && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="size-4" />
-              编辑信息
+        <div className="flex gap-2">
+          {exam.attemptCount > 0 && (
+            <Button variant="outline" size="sm" onClick={() => router.push(`/teacher/exams/${exam.id}/stats`)}>
+              <BarChart3 className="size-4" />
+              成绩统计
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteExamOpen(true)}>
-              <Trash2 className="size-4" />
-              删除考试
-            </Button>
-          </div>
-        )}
+          )}
+          {!isArchived && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="size-4" />
+                编辑信息
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteExamOpen(true)}>
+                <Trash2 className="size-4" />
+                删除考试
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 已下架提示 */}

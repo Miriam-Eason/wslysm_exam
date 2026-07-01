@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S9 完成，准备进入 S10
+**当前步骤**：✅ S11 完成，准备进入 S12
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -94,8 +94,8 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S7** 考试管理（考试状态标签进行中/已截止；已下架考试折叠区 + 历史记录查看；仪表盘题库/考试真实计数；`GET /api/exams?archived=1`；软删后详情页只读模式）
 - [x] **S8** 学生做题流程（考试列表 Enrollment∩ExamClass + status 标注；开始/续答 seededShuffle；四题型做题 UI；计时器；草稿 15s 防抖；提交判分；错题 upsert；结果页）
 - [x] **S9** 错题本（`GET /api/student/wrong-questions` 按考试分组；`POST /api/student/wrong-questions/:id/redo` 重做判分；`/student/wrong` 错题本页（记忆模式+重做模式）；`/student/me` 我的页面；底部 Tab Bar 三入口）
-- [ ] **S10** 成绩统计
-- [ ] **S11** 成绩统计
+- [x] **S10** 结果 + 错题本（PRD 定义的结果页/错题本/记忆重做模式已在 S8/S9 提前实现，此处补记）
+- [x] **S11** 成绩统计（`GET /api/exams/:id/stats` 平均分/及格率/最高低分/分数段/每题准确率+选项选择率；`GET /api/exams/:id/students/:studentId` 按学生下钻；`/teacher/exams/:id/stats` 页面）
 - [ ] **S12** 超管面板
 - [ ] **S13** 部署上线
 
@@ -119,9 +119,12 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S8] 判分逻辑在 `src/lib/grading.ts`；草稿保存：AnswerItem 无 @@unique，用 findMany+update-or-create 模式；seededShuffle 使用 LCG 确保 attemptId 相同则顺序一致（断点续答）；填空答案 `string[]` 存储，初始化时按 stem 中 `____` 数量创建空串数组；AnswerItem 没有 `@@unique([attemptId, examQuestionId])`——如需去重需在 submit 时先 deleteMany 再 createMany
 - [S8] 学生端页面：`src/app/student/layout.tsx`（全局渐变背景）；`src/components/student/exam-list.tsx`（Client Component, 两 tab 筛选）；`src/app/student/exams/[id]/exam-client.tsx`（完整做题 Client Component，含 Question Grid Sheet + Submit Sheet）；`src/app/student/exams/[id]/result/page.tsx`（结果页，含逐题展开/折叠）
 - [S9] 错题本 API：`GET /api/student/wrong-questions`（按考试分组，含答案/解析）；`POST /api/student/wrong-questions/[id]/redo`（重做判分+redoCount+1）；页面：`/student/wrong`（Client Component；记忆模式=答案高亮；重做模式=四题型交互+判分+结果横幅）；`/student/me`（Server Component；学生信息+统计）；`src/components/student/student-tab-bar.tsx`（考试/错题本/我的 三 Tab，usePathname 激活检测）
+- [S11] 统计聚合口径与 PRD §7-22 一致：取每生最近一次 `SUBMITTED` Attempt（按 `attemptNo` 取最大）参与平均分/分段/准确率/选项选择率；聚合逻辑集中在 `src/lib/stats.ts`（`getExamStats` + `getStudentLatestAttemptDetail`），API 与 Server Component 页面共用同一份逻辑，页面直调 lib 免一次网络往返，仅按学生下钻走 Dialog 内 `fetch`
+- [S11] 图表未引入 recharts（PRD 提及但项目未装且无既有图表组件），改为手写 SVG/CSS 条形图与百分比进度条，风格与结果页的手写评分圆环保持一致，避免引入新依赖与默认图表样式割裂
+- [S11] 分数段固定按满分百分比分 5 档（<60/60-69/70-79/80-89/90-100），不随满分数值变化；`optionRates` 仅对 SINGLE_CHOICE/MULTIPLE_CHOICE 计算，依据 submit 时"每题必写 AnswerItem"的保证，分母=已提交人数
 
 **下一步具体任务**：
-进入 **S10 成绩统计**：教师端 `/teacher/exams/:id/stats` 页面（平均分、分数段柱状图、每题准确率 + 选项选择率 + 按学生下钻），`GET /api/exams/:id/stats` API，学生端历史作答列表扩展。
+进入 **S12 超管面板**：Admin（`Teacher.isAdmin=true`）专属路由 `/admin`；教师账号 CRUD；学生账号 CRUD + 批量导入（复用现有导入管线）；各表只读浏览。
 
 ---
 

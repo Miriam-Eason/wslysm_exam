@@ -8,6 +8,7 @@ import {
   Plus, Trash2, ArrowRight, FileText,
   Clock, Users, MoreHorizontal, CalendarDays,
   AlertTriangle, CheckCircle2, Archive, ChevronDown,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -149,6 +150,14 @@ function ExamCard({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
+        {exam.attemptCount > 0 && (
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/teacher/exams/${exam.id}/stats`}>
+              <BarChart3 className="size-4" />
+              统计
+            </Link>
+          </Button>
+        )}
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/teacher/exams/${exam.id}`}>
             {isArchived ? "查看历史" : "查看试卷"}
