@@ -42,7 +42,7 @@ function formatTimeLimit(sec: number): string {
 export function StudentExamList({ studentName }: { studentName: string }) {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"all" | "practice">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "exam" | "practice">("all");
   const router = useRouter();
 
   useEffect(() => {
@@ -57,7 +57,9 @@ export function StudentExamList({ studentName }: { studentName: string }) {
   const filtered =
     activeTab === "all"
       ? exams
-      : exams.filter((e) => e.type === "PRACTICE");
+      : activeTab === "exam"
+        ? exams.filter((e) => e.type === "EXAM")
+        : exams.filter((e) => e.type === "PRACTICE");
 
   const handleStart = (exam: ExamItem) => {
     router.push(`/student/exams/${exam.id}`);
@@ -91,6 +93,7 @@ export function StudentExamList({ studentName }: { studentName: string }) {
         <div className="mt-4 flex gap-1 rounded-2xl bg-surface-container-highest/50 p-1">
           {[
             { key: "all", label: "全部" },
+            { key: "exam", label: "考试" },
             { key: "practice", label: "练习" },
           ].map((tab) => (
             <button
