@@ -24,10 +24,11 @@ export type StudentRow = {
   name: string;
   studentNo: string;
   className: string | null;
-  attemptId: number;
+  submitted: boolean;
+  attemptId: number | null;
   attemptNo: number;
   attemptCount: number;
-  score: number;
+  score: number | null;
   submittedAt: string | null;
 };
 
@@ -79,7 +80,10 @@ export async function getExamStats(examId: number): Promise<ExamStats> {
   const [enrolled, submittedAttempts] = await Promise.all([
     prisma.enrollment.findMany({
       where: { class: { examClasses: { some: { examId } } } },
-      select: { studentId: true },
+      select: {
+        studentId: true,
+        student: { select: { name: true, studentNo: true } },
+      },
       distinct: ["studentId"],
     }),
     prisma.attempt.findMany({
@@ -165,21 +169,41 @@ export async function getExamStats(examId: number): Promise<ExamStats> {
     };
   });
 
-  const classNames = await getClassNamesByStudent(examId, latestAttempts.map((a) => a.studentId));
+  const classNames = await getClassNamesByStudent(examId, enrolled.map((e) => e.studentId));
 
-  const students: StudentRow[] = latestAttempts
+  const submittedRows: StudentRow[] = latestAttempts
     .map((a) => ({
       studentId: a.studentId,
       name: a.student.name,
       studentNo: a.student.studentNo,
       className: classNames.get(a.studentId) ?? null,
+      submitted: true,
       attemptId: a.id,
       attemptNo: a.attemptNo,
       attemptCount: attemptCountByStudent.get(a.studentId) ?? 1,
       score: a.score ?? 0,
       submittedAt: a.submittedAt?.toISOString() ?? null,
     }))
-    .sort((x, y) => y.score - x.score);
+    .sort((x, y) => (y.score ?? 0) - (x.score ?? 0));
+
+  // 未提交作答的学生（已加入考试班级但无任何 SUBMITTED 记录）
+  const unsubmittedRows: StudentRow[] = enrolled
+    .filter((e) => !latestByStudent.has(e.studentId))
+    .map((e) => ({
+      studentId: e.studentId,
+      name: e.student.name,
+      studentNo: e.student.studentNo,
+      className: classNames.get(e.studentId) ?? null,
+      submitted: false,
+      attemptId: null,
+      attemptNo: 0,
+      attemptCount: 0,
+      score: null,
+      submittedAt: null,
+    }))
+    .sort((x, y) => x.studentNo.localeCompare(y.studentNo));
+
+  const students: StudentRow[] = [...submittedRows, ...unsubmittedRows];
 
   return {
     maxScore,

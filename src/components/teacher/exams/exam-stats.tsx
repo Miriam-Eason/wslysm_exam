@@ -189,7 +189,8 @@ export function ExamStats({ exam, stats }: { exam: ExamMeta; stats: ExamStatsDat
             <div className="p-6 pb-4">
               <h2 className="text-base font-semibold text-on-surface">学生成绩</h2>
               <p className="mt-0.5 text-xs text-on-surface-variant">
-                按最近一次已提交得分排序，点击「详情」按题下钻
+                按最近一次已提交得分排序，点击「详情」按题下钻；
+                共 {stats.totalStudents} 人，已交卷 {stats.submittedCount} 人，未交卷 {stats.totalStudents - stats.submittedCount} 人
               </p>
             </div>
             <Table>
@@ -207,27 +208,39 @@ export function ExamStats({ exam, stats }: { exam: ExamMeta; stats: ExamStatsDat
               </TableHeader>
               <TableBody>
                 {stats.students.map((s, idx) => (
-                  <TableRow key={s.studentId}>
-                    <TableCell className="tabular-nums text-on-surface-variant">{idx + 1}</TableCell>
+                  <TableRow key={s.studentId} className={cn(!s.submitted && "opacity-60")}>
+                    <TableCell className="tabular-nums text-on-surface-variant">
+                      {s.submitted ? idx + 1 : "—"}
+                    </TableCell>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell className="text-on-surface-variant">{s.studentNo}</TableCell>
                     <TableCell className="text-on-surface-variant">{s.className ?? "—"}</TableCell>
                     <TableCell className="font-semibold tabular-nums">
-                      {fmtScore(s.score)}
-                      <span className="text-on-surface-variant"> / {fmtScore(stats.maxScore)}</span>
+                      {s.submitted ? (
+                        <>
+                          {fmtScore(s.score ?? 0)}
+                          <span className="text-on-surface-variant"> / {fmtScore(stats.maxScore)}</span>
+                        </>
+                      ) : (
+                        <Badge variant="neutral">未交卷</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-on-surface-variant">{s.attemptCount}</TableCell>
                     <TableCell className="text-on-surface-variant">
                       {s.submittedAt ? new Date(s.submittedAt).toLocaleString("zh-CN") : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <button
-                        onClick={() => setDrillStudent(s)}
-                        className="inline-flex items-center gap-0.5 text-sm font-medium text-primary hover:underline"
-                      >
-                        详情
-                        <ChevronRight className="size-3.5" />
-                      </button>
+                      {s.submitted ? (
+                        <button
+                          onClick={() => setDrillStudent(s)}
+                          className="inline-flex items-center gap-0.5 text-sm font-medium text-primary hover:underline"
+                        >
+                          详情
+                          <ChevronRight className="size-3.5" />
+                        </button>
+                      ) : (
+                        <span className="text-sm text-on-surface-variant">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
