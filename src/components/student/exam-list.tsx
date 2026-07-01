@@ -20,6 +20,7 @@ interface ExamItem {
   canRepeat: boolean;
   remaining: number | null;
   latestScore: number | null;
+  latestAttemptId: number | null;
   createdAt: string;
 }
 
@@ -61,7 +62,15 @@ export function StudentExamList({ studentName }: { studentName: string }) {
         ? exams.filter((e) => e.type === "EXAM")
         : exams.filter((e) => e.type === "PRACTICE");
 
-  const handleStart = (exam: ExamItem) => {
+  const handleAction = (exam: ExamItem) => {
+    if (exam.status === "SUBMITTED" && !exam.canRepeat) {
+      if (exam.latestAttemptId) {
+        router.push(
+          `/student/exams/${exam.id}/result?attemptId=${exam.latestAttemptId}`,
+        );
+      }
+      return;
+    }
     router.push(`/student/exams/${exam.id}`);
   };
 
@@ -137,7 +146,7 @@ export function StudentExamList({ studentName }: { studentName: string }) {
               <ExamCard
                 key={exam.id}
                 exam={exam}
-                onStart={() => handleStart(exam)}
+                onStart={() => handleAction(exam)}
               />
             ))}
           </div>
@@ -190,8 +199,6 @@ function ExamCard({
             ? "开始练习"
             : "开始考试"
           : "查看成绩";
-
-  const buttonDisabled = exam.status === "SUBMITTED" && !exam.canRepeat;
 
   return (
     <div
@@ -285,17 +292,12 @@ function ExamCard({
           <div className="ml-auto">
             <button
               onClick={onStart}
-              disabled={buttonDisabled}
               className="h-10 rounded-full px-5 text-[15px] font-semibold transition-all duration-200 active:scale-95"
               style={{
-                background: buttonDisabled
-                  ? "rgba(87,95,102,0.1)"
-                  : "#007aff",
-                color: buttonDisabled ? "#717786" : "#fff",
-                cursor: buttonDisabled ? "not-allowed" : "pointer",
-                boxShadow: buttonDisabled
-                  ? "none"
-                  : "0 2px 12px rgba(0,122,255,0.3)",
+                background: "#007aff",
+                color: "#fff",
+                cursor: "pointer",
+                boxShadow: "0 2px 12px rgba(0,122,255,0.3)",
               }}
             >
               {buttonLabel}

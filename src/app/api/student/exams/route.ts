@@ -88,6 +88,7 @@ export async function GET(_req: NextRequest) {
         canRepeat,
         remaining,
         latestScore: latestSubmitted?.score ?? null,
+        latestAttemptId: latestSubmitted?.id ?? null,
         createdAt: e.createdAt,
       };
     }),
