@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S12 完成，准备进入 S13
+**当前步骤**：✅ S13 完成（Docker Compose + nginx 全栈部署，本地端到端验证通过）
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -97,7 +97,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S10** 结果 + 错题本（PRD 定义的结果页/错题本/记忆重做模式已在 S8/S9 提前实现，此处补记）
 - [x] **S11** 成绩统计（`GET /api/exams/:id/stats` 平均分/及格率/最高低分/分数段/每题准确率+选项选择率；`GET /api/exams/:id/students/:studentId` 按学生下钻；`/teacher/exams/:id/stats` 页面）
 - [x] **S12** 超管面板（`/admin` 教师账号 CRUD + 学生账号 CRUD/批量导入/软硬删 + 只读数据浏览三表；`/api/admin/*`）
-- [ ] **S13** 部署上线
+- [x] **S13** 部署上线（多阶段 Dockerfile + docker-compose：db/migrate/app/nginx；生产 seed 仅建 admin01/admin02(wxlysm)；部署文档见 `document/部署文档.md`）
 
 **当前已知问题 / 暂缓事项**：
 - [S0] Prisma 锁定在 6.x（CLI 会提示升 7，**不要升**，7 改了客户端生成器与 Docker 输出布局）
@@ -127,9 +127,15 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S12] `/api/students/template`（导入模板下载）原仅限 teacher 角色，已放宽为 teacher/admin 均可访问
 - [S12] 只读数据浏览（`/admin/browse`）未做通用表格引擎，Classes/QuestionBanks/Exams 三表各自手写查询+列，Server Component 直查 Prisma，无独立只读 API
 - [S12] 页面：`src/app/admin/layout.tsx`+`src/components/admin/sidebar.tsx`（仿教师端）；`/admin/teachers`+`teacher-table`/`teacher-form-dialog`；`/admin/students`+`student-table`/`student-form-dialog`/`import-dialog`
+- [S13] **部署架构**：多阶段 `Dockerfile`（`base→deps→builder`(standalone) / `→migrator`(迁移镜像) / `→runner`(精简运行镜像)）+ `docker-compose.yml`(db/migrate/app/nginx)。app 镜像≈560MB（`node:22-slim`，非 root，仅 standalone），不含 Prisma CLI
+- [S13] **迁移拆成独立一次性服务**：Prisma 6 CLI 依赖被提升的传递依赖（`effect` 等），standalone 精简 node_modules 跑不了 `migrate deploy`；故 `migrate` 服务用 `migrator` 阶段（完整依赖）执行 `prisma migrate deploy`+`prisma/seed.prod.mjs`，跑完退出，`app` 靠 `depends_on: service_completed_successfully` 等待
+- [S13] **生产 seed**：`prisma/seed.prod.mjs`（纯 ESM，用 `@prisma/client`+`bcryptjs`，无需 tsx）幂等 upsert 仅两个超管 `admin01`/`admin02`（密码 `wxlysm`，`update:{}` 不覆盖已改密码）；开发 seed(`seed.ts`) 生产不执行
+- [S13] **基于 Debian slim 而非 alpine**：规避 Prisma musl/openssl 引擎兼容问题；runner 额外 `COPY .prisma`（补齐 standalone 偶漏的查询引擎）
+- [S13] **环境变量**：`.env.production`（gitignore；模板 `.env.production.example`），db 与 app/migrate 共用 `env_file`；`DATABASE_URL` 主机名须为 compose 服务名 `db`；nginx 反代 `app:3000`，`client_max_body_size 20m`（Excel 导入），透传 `X-Forwarded-Proto`（NextAuth 回调依赖）
+- [S13] **本机 80 端口验证坑**：本机 80 已被其他容器占用；用 `-f` 叠加 override（`ports: !override [8080:80]`，注意 compose 对 ports 是**追加合并**，必须用 `!override` 才能替换）在 8080 验证，已跑通 nginx→app→db 全链路
 
 **下一步具体任务**：
-进入 **S13 部署上线**：Docker Compose（app + db + nginx）生产环境验证；`docker compose exec app npx prisma migrate deploy`；部署前需将开发账号明文密码（admin123/teacher123）与 `NEXTAUTH_SECRET` 换成生产随机值。
+一期功能与部署已全部完成。可选后续：正式服务器上线（改强口令 + `NEXTAUTH_SECRET` + 启用 HTTPS，详见 `document/部署文档.md` §7/§10）；二期简答题（`SHORT_ANSWER` + 人工批改流程）；登录频率限制加固。
 
 ---
 

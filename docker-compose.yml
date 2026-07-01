@@ -1,0 +1,68 @@
+name: wxlysm-exam-sys
+
+services:
+  # ---------- MySQL 8 ----------
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    env_file: .env.production
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # 默认不对宿主机暴露 3306（仅容器内网访问）。需外部工具连库调试时临时打开：
+    # ports:
+    #   - "3306:3306"
+
+  # ---------- 一次性迁移任务（迁移 + 初始化管理员，跑完即退出）----------
+  # 用含完整依赖的 builder 镜像执行，Prisma CLI 可正常工作；app 镜像因此保持精简。
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    env_file: .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "docker-migrate.sh"]
+    restart: "no"
+
+  # ---------- Next.js 应用（standalone）----------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    expose:
+      - "3000"        # 仅暴露给 nginx，不直接对外
+
+  # ---------- Nginx 反向代理 ----------
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      # 启用 HTTPS 时打开（并在 nginx/conf.d 中配置 443 server 块）：
+      # - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # 证书目录（已被 .gitignore 忽略，含私钥）：
+      # - ./nginx/certs:/etc/nginx/certs:ro
+
+volumes:
+  db_data:
