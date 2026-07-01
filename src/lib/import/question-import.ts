@@ -70,6 +70,15 @@ function stemPreview(stem: string): string {
   return stem.length > 30 ? stem.slice(0, 30) + "…" : stem;
 }
 
+// 读取三级归属列（教材/单元/知识点），统一位于各 Sheet「解析」列之后；空值归一为 null
+function parseAttrs(row: ExcelJS.Row, startCol: number) {
+  return {
+    textbook: cellText(row.getCell(startCol)) || null,
+    unit: cellText(row.getCell(startCol + 1)) || null,
+    knowledgePoint: cellText(row.getCell(startCol + 2)) || null,
+  };
+}
+
 // --- 按题型解析各行 ---
 
 function parseSingleChoice(ws: ExcelJS.Worksheet): QuestionRowResult[] {
@@ -103,6 +112,7 @@ function parseSingleChoice(ws: ExcelJS.Worksheet): QuestionRowResult[] {
       answer: answerKeys.slice(0, 1), // 单选只取第一个
       difficulty,
       analysis,
+      ...parseAttrs(row, 11),
     };
 
     const parsed = questionInputSchema.safeParse(input);
@@ -148,6 +158,7 @@ function parseMultipleChoice(ws: ExcelJS.Worksheet): QuestionRowResult[] {
       answer: answerKeys,
       difficulty,
       analysis,
+      ...parseAttrs(row, 11),
     };
 
     const parsed = questionInputSchema.safeParse(input);
@@ -191,6 +202,7 @@ function parseTrueFalse(ws: ExcelJS.Worksheet): QuestionRowResult[] {
       answer: tfAnswer,
       difficulty,
       analysis,
+      ...parseAttrs(row, 5),
     };
 
     const parsed = questionInputSchema.safeParse(input);
@@ -273,6 +285,7 @@ function parseFillBlank(ws: ExcelJS.Worksheet): QuestionRowResult[] {
       answer,
       difficulty,
       analysis,
+      ...parseAttrs(row, 8),
     };
 
     const parsed = questionInputSchema.safeParse(input);

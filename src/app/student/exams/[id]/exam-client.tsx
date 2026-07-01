@@ -780,14 +780,14 @@ function QuestionGridSheet({
       onClick={onClose}
     >
       <div
-        className="sheet-up mx-auto w-full max-w-[430px] rounded-t-3xl px-5 pb-10 pt-5"
-        style={{ background: "#f9f9ff" }}
+        className="sheet-up mx-auto flex w-full max-w-[430px] flex-col rounded-t-3xl px-5 pb-10 pt-5"
+        style={{ background: "#f9f9ff", maxHeight: "80dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-outline-variant/40" />
+        <div className="mx-auto mb-4 h-1 w-10 flex-shrink-0 rounded-full bg-outline-variant/40" />
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-shrink-0 items-center justify-between">
           <h3 className="text-[18px] font-semibold text-on-surface">题目导航</h3>
           <div className="flex items-center gap-3 text-[12px] text-secondary">
             <span className="flex items-center gap-1">
@@ -805,7 +805,7 @@ function QuestionGridSheet({
           </div>
         </div>
 
-        <div className="grid grid-cols-6 gap-2">
+        <div className="-mx-1 grid grid-cols-6 gap-2 overflow-y-auto px-1 pb-1" style={{ overscrollBehavior: "contain" }}>
           {questions.map((q, i) => {
             const answered = isAnswered(q, answers);
             const isFlagged = flagged.has(q.id);
