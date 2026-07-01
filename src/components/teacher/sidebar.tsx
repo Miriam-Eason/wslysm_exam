@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, BookOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ChangePasswordDialog } from "@/components/teacher/change-password-dialog";
 
 const NAV = [
   { href: "/teacher", label: "仪表盘", icon: LayoutDashboard, ready: true },
@@ -84,7 +85,12 @@ export function TeacherSidebar({ userName }: { userName: string }) {
             <p className="text-xs text-on-surface-variant">教师</p>
           </div>
         </div>
-        <SignOutButton redirectTo="/teacher/login" />
+        <ChangePasswordDialog />
+        <SignOutButton
+          redirectTo="/teacher/login"
+          className="flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition active:scale-[0.98]"
+          style={{ background: "rgba(120,120,128,0.12)", color: "#ff3b30" }}
+        />
       </div>
     </aside>
   );
