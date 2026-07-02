@@ -6,12 +6,19 @@
 
 # ---------- 公共基础层 ----------
 FROM node:22-slim AS base
+# 国内构建加速：Debian 源 → 镜像（默认腾讯云内网，在腾讯云服务器上最快）；
+# npm / Prisma 引擎 → 淘宝镜像。境外构建时可用 --build-arg DEBIAN_MIRROR=deb.debian.org 还原。
+ARG DEBIAN_MIRROR=mirrors.tencentyun.com
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    npm_config_registry=https://registry.npmmirror.com \
+    PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 # Prisma 运行/生成引擎需要 openssl
-RUN apt-get update -y \
+RUN sed -i "s|deb.debian.org|${DEBIAN_MIRROR}|g; s|security.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources 2>/dev/null || true; \
+    sed -i "s|deb.debian.org|${DEBIAN_MIRROR}|g; s|security.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list 2>/dev/null || true; \
+    apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
 
 # ---------- 依赖层（缓存 npm ci）----------
 FROM base AS deps
@@ -54,7 +61,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # 补齐 Prisma 运行期引擎（standalone 追踪偶有遗漏），保证服务端查询可用
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+# 启动脚本：按 MYSQL_* 自动拼装 DATABASE_URL 后再启动服务
+COPY --chown=nextjs:nodejs docker-app-entrypoint.sh ./docker-app-entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+ENTRYPOINT ["sh", "./docker-app-entrypoint.sh"]
