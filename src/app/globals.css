@@ -59,8 +59,26 @@
     "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
+html {
+  /* 禁止滚动到边缘的橡皮筋回弹 */
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--color-surface);
   color: var(--color-on-surface);
   font-family: var(--font-sans);
+  overscroll-behavior: none;
+  /* 去掉移动端点击时的灰色高亮块 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 移动端表单控件字号 ≥16px：iOS 上聚焦 <16px 的输入框会自动放大页面，此处统一兜底。
+   非 @layer 规则，优先级高于 Tailwind 的 text-sm 工具类；仅窄屏生效，不影响桌面。 */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }

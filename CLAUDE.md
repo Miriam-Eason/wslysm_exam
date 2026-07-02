@@ -136,8 +136,11 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [S13-国内部署优化] Dockerfile 加国内镜像源（`ARG DEBIAN_MIRROR=mirrors.tencentyun.com` sed 换 Debian 源 + `npm_config_registry=registry.npmmirror.com` + `PRISMA_ENGINES_MIRROR=…/npmmirror/prisma`），解决腾讯云构建时 apt/npm/prisma 引擎下载龟速/超时；境外构建用 `--build-arg DEBIAN_MIRROR=deb.debian.org` 还原
 - [S13-免手填] `DATABASE_URL` 改由 `docker-app-entrypoint.sh` / `docker-migrate.sh` 用 `: "${DATABASE_URL:=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}}"` 自动拼装（口令建议用 `openssl rand -hex` 保证 URL 安全）；`NEXTAUTH_URL` 靠 `trustHost:true`（代码只读它、不读 NEXTAUTH_URL）自动识别，二者均从 `.env.production` 移除，部署只需填两个 MYSQL 口令 + `NEXTAUTH_SECRET`；runner 由 `CMD node server.js` 改为 `ENTRYPOINT ["sh","./docker-app-entrypoint.sh"]`
 
+- [移动端适配] 根 `layout.tsx` 加 `viewport`（禁缩放 `maximumScale=1/userScalable=false` + `interactive-widget=resizes-content` + `themeColor`）；`globals.css` 加 `overscroll-behavior:none` + 窄屏 `input/textarea/select{font-size:16px}`（根治 iOS 聚焦放大，非 @layer 规则优先级高于 Tailwind）；**未用 `viewport-fit=cover`**（靠 iOS 自动安全区避让刘海，零组件改动）
+- [PWA-学生端] `src/app/manifest.ts`(→`/manifest.webmanifest`, start_url `/student`, display standalone) + `public/sw.js`(**保守缓存**：仅静态资源，页面/`/api` 一律走网络) + `src/components/pwa-register.tsx`(仅 `window.isSecureContext` 下注册 → **公网 HTTP 休眠、HTTPS 自动激活、无需改码**)；图标由方形校徽 `public/school-icon-logo.png` 经 PIL 生成到 `public/icons/`；已用 Chrome DevTools 实测 SW registered+active、input 16px、overscroll none、无报错
+
 **下一步具体任务**：
-一期功能与部署已全部完成。可选后续：正式服务器上线（改强口令 + `NEXTAUTH_SECRET` + 启用 HTTPS，详见 `document/部署文档.md` §7/§10）；二期简答题（`SHORT_ANSWER` + 人工批改流程）；登录频率限制加固。
+一期功能与部署已全部完成。可选后续：正式服务器上线（改强口令 + `NEXTAUTH_SECRET` + 启用 HTTPS，详见 `document/部署文档.md` §7/§10）；HTTPS 上线后 PWA 自动可安装，国内安卓可用 PWABuilder 打包 TWA APK；二期简答题（`SHORT_ANSWER` + 人工批改流程）；登录频率限制加固。
 
 ---
 
