@@ -133,7 +133,7 @@ export function ExamStats({ exam, stats }: { exam: ExamMeta; stats: ExamStatsDat
       ) : (
         <>
           {/* 分数段分布 */}
-          <Card className="p-6">
+          <Card id="score-buckets" className="p-6 scroll-mt-4">
             <h2 className="text-base font-semibold text-on-surface">分数段分布</h2>
             <p className="mt-0.5 text-xs text-on-surface-variant">
               按满分百分比分段，取每人最近一次已提交作答
@@ -170,7 +170,7 @@ export function ExamStats({ exam, stats }: { exam: ExamMeta; stats: ExamStatsDat
           </Card>
 
           {/* 每题准确率 + 选项选择率 */}
-          <Card className="overflow-hidden p-0">
+          <Card id="question-stats" className="overflow-hidden p-0 scroll-mt-4">
             <div className="p-6 pb-0">
               <h2 className="text-base font-semibold text-on-surface">每题作答情况</h2>
               <p className="mt-0.5 text-xs text-on-surface-variant">
@@ -185,7 +185,7 @@ export function ExamStats({ exam, stats }: { exam: ExamMeta; stats: ExamStatsDat
           </Card>
 
           {/* 学生成绩列表 */}
-          <Card className="overflow-hidden p-0">
+          <Card id="student-scores" className="overflow-hidden p-0 scroll-mt-4">
             <div className="p-6 pb-4">
               <h2 className="text-base font-semibold text-on-surface">学生成绩</h2>
               <p className="mt-0.5 text-xs text-on-surface-variant">
@@ -402,27 +402,38 @@ function StudentDrillDialog({
           <div className="rounded-xl bg-danger-container p-4 text-sm text-danger">{error}</div>
         )}
 
-        {detail && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-4 rounded-xl bg-surface-container-low px-4 py-3 text-sm">
-              <span className="font-semibold text-on-surface">
-                {fmtScore(detail.score)} / {fmtScore(maxScore)} 分
-              </span>
-              <span className="text-on-surface-variant">第 {detail.attemptNo} 次作答</span>
-              {detail.submittedAt && (
-                <span className="text-on-surface-variant">
-                  {new Date(detail.submittedAt).toLocaleString("zh-CN")}
+        {detail && (() => {
+          const wrongQuestions = detail.questions.filter((q) => !q.isCorrect);
+          return (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-4 rounded-xl bg-surface-container-low px-4 py-3 text-sm">
+                <span className="font-semibold text-on-surface">
+                  {fmtScore(detail.score)} / {fmtScore(maxScore)} 分
                 </span>
+                <span className="text-on-surface-variant">第 {detail.attemptNo} 次作答</span>
+                <span className="text-on-surface-variant">错题 {wrongQuestions.length} 题</span>
+                {detail.submittedAt && (
+                  <span className="text-on-surface-variant">
+                    {new Date(detail.submittedAt).toLocaleString("zh-CN")}
+                  </span>
+                )}
+              </div>
+
+              {wrongQuestions.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {wrongQuestions.map((q) => (
+                    <DrillQuestion key={q.id} q={q} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-success-container/20 py-8 text-sm text-success">
+                  <CheckCircle2 className="size-4.5" />
+                  全部答对，暂无错题
+                </div>
               )}
             </div>
-
-            <div className="flex flex-col gap-2">
-              {detail.questions.map((q) => (
-                <DrillQuestion key={q.id} q={q} />
-              ))}
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </DialogContent>
     </Dialog>
   );

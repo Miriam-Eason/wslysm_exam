@@ -15,8 +15,15 @@ const NAV = [
   { href: "/teacher/exams", label: "考试管理", icon: FileText, ready: true },
 ];
 
+const STATS_SUBNAV = [
+  { hash: "score-buckets", label: "分数段分布" },
+  { hash: "question-stats", label: "每题作答情况" },
+  { hash: "student-scores", label: "学生成绩" },
+];
+
 export function TeacherSidebar({ userName }: { userName: string }) {
   const pathname = usePathname();
+  const statsMatch = pathname.match(/^\/teacher\/exams\/\d+\/stats/);
 
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-outline-variant bg-surface-container-low">
@@ -55,22 +62,37 @@ export function TeacherSidebar({ userName }: { userName: string }) {
           }
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-primary-container text-primary"
-                  : "text-on-surface-variant hover:bg-surface-container",
+            <div key={item.href} className="flex flex-col gap-1">
+              <Link
+                href={item.href}
+                className={cn(
+                  "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-primary-container text-primary"
+                    : "text-on-surface-variant hover:bg-surface-container",
+                )}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
+                )}
+                <Icon className="size-4" />
+                {item.label}
+              </Link>
+
+              {item.href === "/teacher/exams" && statsMatch && (
+                <div className="ml-[1.15rem] flex flex-col gap-0.5 border-l border-outline-variant/60 pl-4">
+                  {STATS_SUBNAV.map((sub) => (
+                    <Link
+                      key={sub.hash}
+                      href={`${statsMatch[0]}#${sub.hash}`}
+                      className="rounded-lg px-2.5 py-1.5 text-[13px] text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
               )}
-            >
-              {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
-              )}
-              <Icon className="size-4" />
-              {item.label}
-            </Link>
+            </div>
           );
         })}
       </nav>
