@@ -918,11 +918,19 @@ function AnalysisBox({ analysis }: { analysis: string }) {
 
 // ─── Type Badge ───────────────────────────────────────────────────────────────
 
+// 每种题型用独立配色，方便学生扫一眼就能区分题型
+const TYPE_COLORS: Record<QType, { color: string; background: string }> = {
+  SINGLE_CHOICE: { color: "#007aff", background: "rgba(0,122,255,0.1)" },
+  MULTIPLE_CHOICE: { color: "#af52de", background: "rgba(175,82,222,0.1)" },
+  TRUE_FALSE: { color: "#34c759", background: "rgba(52,199,89,0.1)" },
+  FILL_BLANK: { color: "#ff9500", background: "rgba(255,149,0,0.1)" },
+};
+
 function TypeBadge({ type }: { type: QType }) {
   return (
     <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
-      style={{ color: "#004493", background: "rgba(0,68,147,0.07)" }}
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
+      style={TYPE_COLORS[type]}
     >
       {TYPE_LABELS[type]}
     </span>

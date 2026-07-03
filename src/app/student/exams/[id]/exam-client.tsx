@@ -293,13 +293,13 @@ export function ExamClient({ examId }: { examId: number }) {
 
           {/* Progress + timer row */}
           <div className="flex items-center justify-between px-0.5">
-            <span className="text-[13px] text-secondary">
+            <span className="text-[14px] text-secondary">
               第{" "}
               <span className="font-semibold text-on-surface">{idx + 1}</span>
               {" "}/ {total} 题
             </span>
             <span
-              className="flex items-center gap-1 tabular-nums text-[13px] font-medium transition-colors duration-300"
+              className="flex items-center gap-1 tabular-nums text-[14px] font-medium transition-colors duration-300"
               style={{ color: timerUrgent ? "#ff3b30" : "#575f66" }}
             >
               {isCountdown
@@ -335,7 +335,7 @@ export function ExamClient({ examId }: { examId: number }) {
             {/* Card header */}
             <div className="mb-4 flex items-center gap-2">
               <TypeBadge type={q.type} />
-              <span className="text-[12px] font-medium text-secondary">
+              <span className="text-[13px] font-medium text-secondary">
                 {q.score} 分
               </span>
             </div>
@@ -348,7 +348,7 @@ export function ExamClient({ examId }: { examId: number }) {
                 onChange={(v) => setAnswer(q.id, v)}
               />
             ) : (
-              <p className="mb-5 text-[17px] leading-[1.65] text-on-surface">
+              <p className="mb-5 text-[19px] leading-[1.65] text-on-surface">
                 {q.stem}
               </p>
             )}
@@ -553,11 +553,19 @@ const TYPE_MAP: Record<QType, string> = {
   FILL_BLANK: "填空",
 };
 
+// 每种题型用独立配色，方便学生扫一眼就能区分题型
+const TYPE_COLORS: Record<QType, { color: string; background: string }> = {
+  SINGLE_CHOICE: { color: "#007aff", background: "rgba(0,122,255,0.1)" },
+  MULTIPLE_CHOICE: { color: "#af52de", background: "rgba(175,82,222,0.1)" },
+  TRUE_FALSE: { color: "#34c759", background: "rgba(52,199,89,0.1)" },
+  FILL_BLANK: { color: "#ff9500", background: "rgba(255,149,0,0.1)" },
+};
+
 function TypeBadge({ type }: { type: QType }) {
   return (
     <span
-      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-      style={{ color: "#004493", background: "rgba(0,68,147,0.07)" }}
+      className="inline-flex items-center rounded-full px-3 py-1 text-[13px] font-bold"
+      style={TYPE_COLORS[type]}
     >
       {TYPE_MAP[type]}
     </span>
@@ -592,7 +600,7 @@ function SingleChoiceOpts({
             }}
           >
             <span
-              className="mt-0.5 flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold transition-all duration-200"
+              className="mt-0.5 flex h-[28px] w-[28px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold transition-all duration-200"
               style={{
                 background: active ? "#007aff" : "rgba(113,119,134,0.1)",
                 color: active ? "#fff" : "#575f66",
@@ -600,7 +608,7 @@ function SingleChoiceOpts({
             >
               {opt.key}
             </span>
-            <span className="flex-1 text-[15px] leading-relaxed text-on-surface">
+            <span className="flex-1 text-[16px] leading-relaxed text-on-surface">
               {opt.text}
             </span>
           </button>
@@ -631,7 +639,7 @@ function MultipleChoiceOpts({
   };
   return (
     <div className="flex flex-col gap-2.5">
-      <p className="mb-1 text-[12px] font-medium text-secondary">可多选</p>
+      <p className="mb-1 text-[13px] font-medium text-secondary">可多选</p>
       {options.map((opt) => {
         const active = sel.has(opt.key);
         return (
@@ -646,7 +654,7 @@ function MultipleChoiceOpts({
             }}
           >
             <span
-              className="mt-0.5 flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-[8px] text-[12px] font-bold transition-all duration-200"
+              className="mt-0.5 flex h-[28px] w-[28px] flex-shrink-0 items-center justify-center rounded-[8px] text-[13px] font-bold transition-all duration-200"
               style={{
                 background: active ? "#007aff" : "rgba(113,119,134,0.1)",
                 color: active ? "#fff" : "#575f66",
@@ -654,7 +662,7 @@ function MultipleChoiceOpts({
             >
               {active ? "✓" : opt.key}
             </span>
-            <span className="flex-1 text-[15px] leading-relaxed text-on-surface">
+            <span className="flex-1 text-[16px] leading-relaxed text-on-surface">
               {opt.text}
             </span>
           </button>
@@ -701,7 +709,7 @@ function TrueFalseOpts({
               {opt.mark}
             </span>
             <span
-              className="text-[16px] font-semibold transition-colors duration-200"
+              className="text-[17px] font-semibold transition-colors duration-200"
               style={{ color: active ? opt.color : "#575f66" }}
             >
               {opt.label}
@@ -736,7 +744,7 @@ function FillBlankRenderer({
   };
 
   return (
-    <div className="mb-5 text-[17px] leading-[2] text-on-surface">
+    <div className="mb-5 text-[19px] leading-[2] text-on-surface">
       {parts.map((part, i) => (
         <Fragment key={i}>
           {part}
@@ -746,7 +754,7 @@ function FillBlankRenderer({
               value={vals[i] ?? ""}
               onChange={(e) => update(i, e.target.value)}
               placeholder={`第${i + 1}空`}
-              className="mx-1.5 inline-block w-28 min-w-0 border-0 border-b-2 bg-transparent px-1 pb-0 pt-0.5 text-[17px] font-medium text-primary outline-none transition-all duration-200 placeholder:text-outline-variant/60 focus:border-primary"
+              className="mx-1.5 inline-block w-28 min-w-0 border-0 border-b-2 bg-transparent px-1 pb-0 pt-0.5 text-[19px] font-medium text-primary outline-none transition-all duration-200 placeholder:text-outline-variant/60 focus:border-primary"
               style={{ borderColor: vals[i]?.trim() ? "#007aff" : "#c1c6d7" }}
             />
           )}
