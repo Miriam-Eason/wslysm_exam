@@ -22,7 +22,7 @@ export function AdminSidebar({ userName }: { userName: string }) {
       <div className="flex h-16 items-center px-5">
         <Image
           src="/school-logo.png"
-          alt="无锡旅商智能练测系统"
+          alt="无锡旅游商贸助考宝"
           width={1500}
           height={234}
           priority

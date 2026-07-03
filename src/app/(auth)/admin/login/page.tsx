@@ -1,7 +1,7 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { LoginBrand } from "@/components/auth/login-brand";
 
-export const metadata = { title: "超管登录 · 无锡旅商智能练测系统" };
+export const metadata = { title: "超管登录 · 无锡旅游商贸助考宝" };
 
 export default function AdminLoginPage() {
   return (

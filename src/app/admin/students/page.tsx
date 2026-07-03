@@ -7,7 +7,7 @@ import { StudentTable } from "@/components/admin/students/student-table";
 import { ImportStudentsDialog } from "@/components/admin/students/import-dialog";
 import { StudentFormDialog } from "@/components/admin/students/student-form-dialog";
 
-export const metadata = { title: "学生账号管理 · 无锡旅商智能练测系统" };
+export const metadata = { title: "学生账号管理 · 无锡旅游商贸助考宝" };
 
 const PAGE_SIZE = 20;
 

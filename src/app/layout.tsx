@@ -11,14 +11,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "无锡旅商智能练测系统",
+  title: "无锡旅游商贸助考宝",
   description: "无锡旅游商贸高等职业技术学校 · 智能题库练测平台",
-  applicationName: "旅商练测",
+  applicationName: "助考宝",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "旅商练测",
+    title: "助考宝",
   },
   icons: {
     icon: [

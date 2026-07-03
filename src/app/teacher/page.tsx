@@ -38,7 +38,7 @@ export default async function TeacherDashboard() {
           你好，{session.user.name}
         </h1>
         <p className="text-sm text-on-surface-variant">
-          欢迎回到无锡旅商智能练测系统，从这里管理你的班级与教学。
+          欢迎回到无锡旅游商贸助考宝，从这里管理你的班级与教学。
         </p>
       </header>
 

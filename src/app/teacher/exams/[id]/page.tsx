@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { ExamDetail } from "@/components/teacher/exams/exam-detail";
 
-export const metadata = { title: "试卷详情 · 无锡旅商智能练测系统" };
+export const metadata = { title: "试卷详情 · 无锡旅游商贸助考宝" };
 
 export default async function ExamDetailPage({
   params,

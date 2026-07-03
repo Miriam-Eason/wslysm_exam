@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getExamStats } from "@/lib/stats";
 import { ExamStats } from "@/components/teacher/exams/exam-stats";
 
-export const metadata = { title: "成绩统计 · 无锡旅商智能练测系统" };
+export const metadata = { title: "成绩统计 · 无锡旅游商贸助考宝" };
 
 export default async function ExamStatsPage({
   params,

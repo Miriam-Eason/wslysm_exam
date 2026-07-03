@@ -2,7 +2,7 @@ import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { ClassList } from "@/components/teacher/classes/class-list";
 
-export const metadata = { title: "班级管理 · 无锡旅商智能练测系统" };
+export const metadata = { title: "班级管理 · 无锡旅游商贸助考宝" };
 
 export default async function ClassesPage() {
   const session = await requireRole("teacher");

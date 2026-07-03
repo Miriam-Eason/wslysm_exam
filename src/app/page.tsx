@@ -22,7 +22,7 @@ export default function Home() {
         />
         <div className="h-px w-16 bg-outline-variant/50" />
         <h1 className="text-3xl font-bold tracking-tight text-on-surface">
-          无锡旅商智能练测系统
+          无锡旅游商贸助考宝
         </h1>
         <p className="text-on-surface-variant">请选择登录入口</p>
       </header>

@@ -27,7 +27,7 @@ export function buildStudentImportWorkbook(
   opts: { withSample?: boolean } = {},
 ): ExcelJS.Workbook {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "无锡旅商智能练测系统";
+  wb.creator = "无锡旅游商贸助考宝";
 
   const ws = wb.addWorksheet("学生名单", {
     views: [{ state: "frozen", ySplit: 1 }], // 冻结首行

@@ -2,7 +2,7 @@ import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { CreateExamWizard } from "@/components/teacher/exams/create-exam-wizard";
 
-export const metadata = { title: "新建考试 · 无锡旅商智能练测系统" };
+export const metadata = { title: "新建考试 · 无锡旅游商贸助考宝" };
 
 export default async function NewExamPage() {
   const session = await requireRole("teacher");

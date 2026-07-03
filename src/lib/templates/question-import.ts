@@ -208,7 +208,7 @@ function buildFillBlankSheet(wb: ExcelJS.Workbook) {
 
 export function buildQuestionImportWorkbook(): ExcelJS.Workbook {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "无锡旅商智能练测系统";
+  wb.creator = "无锡旅游商贸助考宝";
   wb.lastModifiedBy = "wxlysm-exam";
 
   buildChoiceSheet(wb, "单选题");

@@ -2,7 +2,7 @@ import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { ExamList } from "@/components/teacher/exams/exam-list";
 
-export const metadata = { title: "考试管理 · 无锡旅商智能练测系统" };
+export const metadata = { title: "考试管理 · 无锡旅游商贸助考宝" };
 
 export default async function ExamsPage() {
   const session = await requireRole("teacher");

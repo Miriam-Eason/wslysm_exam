@@ -4,8 +4,8 @@ import type { MetadataRoute } from "next";
 // Next 会在 /manifest.webmanifest 提供此文件。
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "无锡旅商智能练测系统",
-    short_name: "旅商练测",
+    name: "无锡旅游商贸助考宝",
+    short_name: "助考宝",
     description: "无锡旅游商贸高等职业技术学校 · 智能题库练测平台",
     start_url: "/student",
     scope: "/",

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { TeacherTable } from "@/components/admin/teachers/teacher-table";
 
-export const metadata = { title: "教师账号管理 · 无锡旅商智能练测系统" };
+export const metadata = { title: "教师账号管理 · 无锡旅游商贸助考宝" };
 
 export default async function AdminTeachersPage({
   searchParams,

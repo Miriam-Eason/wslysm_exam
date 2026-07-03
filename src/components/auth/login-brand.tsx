@@ -11,7 +11,7 @@ type Props = {
   roleClassName?: string;
 };
 
-// 登录页品牌区：校徽 + 系统名「无锡旅商智能练测系统」+ 门户副标题
+// 登录页品牌区：校徽 + 系统名「无锡旅游商贸助考宝」+ 门户副标题
 export function LoginBrand({
   role,
   subtitle,
@@ -42,7 +42,7 @@ export function LoginBrand({
           {role}
         </span>
         <h1 className="text-2xl font-bold tracking-tight text-on-surface">
-          无锡旅商智能练测系统
+          无锡旅游商贸助考宝
         </h1>
         <p className="text-sm text-on-surface-variant">{subtitle}</p>
       </div>

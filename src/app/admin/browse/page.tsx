@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
-export const metadata = { title: "数据浏览 · 无锡旅商智能练测系统" };
+export const metadata = { title: "数据浏览 · 无锡旅游商贸助考宝" };
 
 const PAGE_SIZE = 20;
 const TABLES = [
