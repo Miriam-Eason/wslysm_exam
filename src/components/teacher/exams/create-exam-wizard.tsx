@@ -15,6 +15,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  ComposeStep, initialComposeDraft,
+  type ComposeDraft, type ComposeMode,
+} from "./compose-step";
+
+type ComposeRule = {
+  unit: string | null; knowledgePoint: string | null;
+  type: string | null; difficulty: string | null; count: number; score: number;
+};
+type Blueprint = { mode: ComposeMode; rules: ComposeRule[] };
 
 type Bank = { id: number; name: string; subject: string | null; questionCount: number };
 type ClassItem = { id: number; name: string; studentCount: number };
@@ -46,6 +56,9 @@ type FormData = {
   bankId: number | null;
   classIds: number[];
   defaultScore: string;
+  composeMode: ComposeMode;
+  selection: { questionId: number; score: number }[] | null;
+  blueprint: Blueprint | null;
 };
 
 const INIT: FormData = {
@@ -61,21 +74,44 @@ const INIT: FormData = {
   bankId: null,
   classIds: [],
   defaultScore: "1",
+  composeMode: "WHOLE",
+  selection: null,
+  blueprint: null,
 };
 
 export function CreateExamWizard({ banks, classes }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<StepId>(0);
   const [form, setForm] = useState<FormData>(INIT);
+  const [composeDraft, setComposeDraft] = useState<ComposeDraft>(initialComposeDraft);
   const [busy, setBusy] = useState(false);
 
   function set<K extends keyof FormData>(key: K, val: FormData[K]) {
     setForm((f) => ({ ...f, [key]: val }));
   }
 
+  // 切换题库：重置组卷方式与已生成选题（不同库维度不同）
+  function selectBank(bankId: number) {
+    setForm((f) => ({ ...f, bankId, composeMode: "WHOLE", selection: null, blueprint: null }));
+    setComposeDraft(initialComposeDraft());
+  }
+
+  // ComposeStep 上抛解析结果
+  function onComposeResolved(
+    mode: ComposeMode,
+    selection: { questionId: number; score: number }[] | null,
+    blueprint: Blueprint | null,
+  ) {
+    setForm((f) => ({ ...f, composeMode: mode, selection, blueprint }));
+  }
+
   function canProceed(): boolean {
     if (step === 0) return form.name.trim().length > 0;
-    if (step === 1) return form.bankId !== null;
+    if (step === 1) {
+      if (form.bankId === null) return false;
+      // 灵活组卷需先预览生成选题；整库直接放行
+      return form.composeMode === "WHOLE" || (form.selection?.length ?? 0) > 0;
+    }
     if (step === 2) return form.classIds.length > 0;
     return true;
   }
@@ -109,6 +145,9 @@ export function CreateExamWizard({ banks, classes }: Props) {
         shuffleOptions: form.shuffleOptions,
         classIds: form.classIds,
         defaultScore: Number(form.defaultScore) || 1,
+        ...(form.composeMode !== "WHOLE" && form.selection
+          ? { selection: form.selection, blueprint: form.blueprint ?? undefined }
+          : {}),
       };
 
       const res = await fetch("/api/exams", {
@@ -173,7 +212,16 @@ export function CreateExamWizard({ banks, classes }: Props) {
       {/* 步骤内容 */}
       <Card className="p-6">
         {step === 0 && <Step0 form={form} set={set} />}
-        {step === 1 && <Step1 banks={banks} form={form} set={set} />}
+        {step === 1 && (
+          <Step1
+            banks={banks}
+            form={form}
+            selectBank={selectBank}
+            composeDraft={composeDraft}
+            setComposeDraft={setComposeDraft}
+            onResolved={onComposeResolved}
+          />
+        )}
         {step === 2 && <Step2 classes={classes} form={form} set={set} />}
         {step === 3 && (
           <Step3
@@ -371,58 +419,85 @@ function Step0({
   );
 }
 
-// ─── 步骤 1：选题库 ─────────────────────────────────────────────
+// ─── 步骤 1：选题库 + 组卷方式 ──────────────────────────────────
 function Step1({
   banks,
   form,
-  set,
+  selectBank,
+  composeDraft,
+  setComposeDraft,
+  onResolved,
 }: {
   banks: Bank[];
   form: FormData;
-  set: <K extends keyof FormData>(k: K, v: FormData[K]) => void;
+  selectBank: (bankId: number) => void;
+  composeDraft: ComposeDraft;
+  setComposeDraft: (d: ComposeDraft) => void;
+  onResolved: (
+    mode: ComposeMode,
+    selection: { questionId: number; score: number }[] | null,
+    blueprint: Blueprint | null,
+  ) => void;
 }) {
+  const selectedBank = banks.find((b) => b.id === form.bankId);
+
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-lg font-semibold text-on-surface">选择题库</h2>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          将整库所有题目导入试卷快照，后续改/删原题不影响试卷。
-        </p>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5">
+        <div>
+          <h2 className="text-lg font-semibold text-on-surface">选择题库</h2>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            试卷题目为题库题目的快照，后续改/删原题不影响试卷。
+          </p>
+        </div>
+
+        {banks.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-outline-variant px-6 py-12 text-center text-sm text-on-surface-variant">
+            暂无题库，请先在题库管理页面创建并添加题目。
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {banks.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => selectBank(b.id)}
+                className={cn(
+                  "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
+                  form.bankId === b.id
+                    ? "border-primary bg-primary-container"
+                    : "border-outline-variant bg-surface-container-lowest hover:border-primary/40 hover:bg-surface-container-low",
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-medium text-on-surface">{b.name}</span>
+                  {form.bankId === b.id && (
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary">
+                      <Check className="size-3 text-white" />
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {b.subject && <Badge variant="primary">{b.subject}</Badge>}
+                  <span className="text-xs text-on-surface-variant">{b.questionCount} 道题</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {banks.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-outline-variant px-6 py-12 text-center text-sm text-on-surface-variant">
-          暂无题库，请先在题库管理页面创建并添加题目。
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {banks.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              onClick={() => set("bankId", b.id)}
-              className={cn(
-                "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
-                form.bankId === b.id
-                  ? "border-primary bg-primary-container"
-                  : "border-outline-variant bg-surface-container-lowest hover:border-primary/40 hover:bg-surface-container-low",
-              )}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-medium text-on-surface">{b.name}</span>
-                {form.bankId === b.id && (
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary">
-                    <Check className="size-3 text-white" />
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {b.subject && <Badge variant="primary">{b.subject}</Badge>}
-                <span className="text-xs text-on-surface-variant">{b.questionCount} 道题</span>
-              </div>
-            </button>
-          ))}
-        </div>
+      {selectedBank && (
+        <>
+          <div className="h-px bg-outline-variant/60" />
+          <ComposeStep
+            bankId={selectedBank.id}
+            bankQuestionCount={selectedBank.questionCount}
+            draft={composeDraft}
+            onDraftChange={setComposeDraft}
+            onResolved={onResolved}
+          />
+        </>
       )}
     </div>
   );
@@ -521,6 +596,15 @@ function Step3({
       })
     : "不限";
 
+  const isWhole = form.composeMode === "WHOLE";
+  const questionCount = isWhole ? (selectedBank?.questionCount ?? 0) : (form.selection?.length ?? 0);
+  const totalScore = isWhole
+    ? Math.round(questionCount * (Number(form.defaultScore) || 1) * 100) / 100
+    : Math.round((form.selection?.reduce((s, it) => s + it.score, 0) ?? 0) * 100) / 100;
+  const composeLabel =
+    form.composeMode === "WHOLE" ? "整库组卷"
+      : form.composeMode === "QUICK" ? "快捷组卷" : "明细组卷";
+
   return (
     <div className="flex flex-col gap-5">
       <h2 className="text-lg font-semibold text-on-surface">确认信息</h2>
@@ -529,8 +613,11 @@ function Step3({
         {[
           { label: "名称", value: form.name },
           { label: "类型", value: form.type === "EXAM" ? "考试" : "练习" },
-          { label: "题库", value: selectedBank ? `${selectedBank.name}（${selectedBank.questionCount} 道题）` : "—" },
-          { label: "每题分值", value: `${form.defaultScore} 分` },
+          { label: "题库", value: selectedBank ? selectedBank.name : "—" },
+          { label: "组卷方式", value: composeLabel },
+          { label: "题目数", value: `${questionCount} 题` },
+          { label: "试卷满分", value: `${totalScore} 分` },
+          ...(isWhole ? [{ label: "每题分值", value: `${form.defaultScore} 分` }] : []),
           {
             label: "参与班级",
             value: selectedClasses.length > 0 ? selectedClasses.map((c) => c.name).join("、") : "—",
@@ -549,7 +636,7 @@ function Step3({
       </dl>
 
       <p className="text-xs text-on-surface-variant">
-        确认后将把题库中所有 {selectedBank?.questionCount ?? 0} 道题目复制为试卷快照，后续对原题的修改不影响本试卷。
+        确认后将把选中的 {questionCount} 道题目复制为试卷快照，后续对原题的修改不影响本试卷。
       </p>
     </div>
   );

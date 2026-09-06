@@ -1,4 +1,11 @@
 import { z } from "zod";
+import { composeRuleSchema } from "@/lib/exam-compose";
+
+// 灵活组卷：预览产出的具体选题（questionId + 卷面分值），按数组顺序即卷面题序
+const examSelectionItem = z.object({
+  questionId: z.number().int().positive(),
+  score: z.number().min(0.5).max(100),
+});
 
 export const createExamSchema = z.object({
   name: z.string().min(1, "考试名称不能为空").max(100),
@@ -12,6 +19,14 @@ export const createExamSchema = z.object({
   shuffleOptions: z.boolean().default(false),
   classIds: z.array(z.number().int().positive()).min(1, "至少选择一个班级"),
   defaultScore: z.number().min(0.5).default(1),
+  // 灵活组卷（可选）：省略=整库组卷（向后兼容）；提供=按 selection 快照
+  selection: z.array(examSelectionItem).min(1).max(2000).optional(),
+  blueprint: z
+    .object({
+      mode: z.enum(["QUICK", "DETAILED"]),
+      rules: z.array(composeRuleSchema),
+    })
+    .optional(),
 });
 
 export const updateExamSchema = z.object({

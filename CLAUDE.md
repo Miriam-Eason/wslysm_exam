@@ -80,7 +80,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 ## 🚧 当前进度
 
-**当前步骤**：✅ S13 完成（Docker Compose + nginx 全栈部署，本地端到端验证通过）
+**当前步骤**：✅ S14 完成（灵活组卷：整库/快捷/明细三档 + 预览，浏览器端到端验证通过）
 
 **进度概览**：
 - [x] **S0** 脚手架 + Schema + Seed（Next 16.2.9 + Prisma 6.19.3 + MySQL exam_system；11表已建；seed=3教师/30学生/2题库/5题/1考试快照/3作答）
@@ -98,6 +98,7 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 - [x] **S11** 成绩统计（`GET /api/exams/:id/stats` 平均分/及格率/最高低分/分数段/每题准确率+选项选择率；`GET /api/exams/:id/students/:studentId` 按学生下钻；`/teacher/exams/:id/stats` 页面）
 - [x] **S12** 超管面板（`/admin` 教师账号 CRUD + 学生账号 CRUD/批量导入/软硬删 + 只读数据浏览三表；`/api/admin/*`）
 - [x] **S13** 部署上线（多阶段 Dockerfile + docker-compose：db/migrate/app/nginx；生产 seed 仅建 admin01/admin02(wxlysm)；部署文档见 `document/部署文档.md`）
+- [x] **S14** 灵活组卷（整库/快捷/明细三档；`src/lib/exam-compose.ts` 解析器 + `GET /api/banks/:id/dimensions` + `POST /api/banks/:id/compose` 预览 + `Exam.blueprint`；向导 Step1 接入 `compose-step.tsx`；解析器 15 单测 + 浏览器端到端全过）
 
 **当前已知问题 / 暂缓事项**：
 - [S0] Prisma 锁定在 6.x（CLI 会提示升 7，**不要升**，7 改了客户端生成器与 Docker 输出布局）
@@ -138,9 +139,15 @@ docker compose exec app npx prisma migrate deploy  # 生产迁移
 
 - [移动端适配] 根 `layout.tsx` 加 `viewport`（禁缩放 `maximumScale=1/userScalable=false` + `interactive-widget=resizes-content` + `themeColor`）；`globals.css` 加 `overscroll-behavior:none` + 窄屏 `input/textarea/select{font-size:16px}`（根治 iOS 聚焦放大，非 @layer 规则优先级高于 Tailwind）；**未用 `viewport-fit=cover`**（靠 iOS 自动安全区避让刘海，零组件改动）
 - [PWA-学生端] `src/app/manifest.ts`(→`/manifest.webmanifest`, start_url `/student`, display standalone) + `public/sw.js`(**保守缓存**：仅静态资源，页面/`/api` 一律走网络) + `src/components/pwa-register.tsx`(仅 `window.isSecureContext` 下注册 → **公网 HTTP 休眠、HTTPS 自动激活、无需改码**)；图标由方形校徽 `public/school-icon-logo.png` 经 PIL 生成到 `public/icons/`；已用 Chrome DevTools 实测 SW registered+active、input 16px、overscroll none、无报错
+- [S14] **三档统一为 rules[]**：整库=无规则、快捷=单维配额编译、明细=多维交叉行；解析器 `src/lib/exam-compose.ts`（`selectQuestions` 顺序抽/抽过排除/返回缺口，规则字段 `null`=不限、`""`=未标注、值=trim 精确匹配）；Zod 与 `createExamSchema` 共用 `composeRuleSchema`
+- [S14] **预览即定稿**：`POST /api/banks/:id/compose` 返回具体 questionId 列表，确认时 `createExamSchema.selection[]` 原样回传落快照（校验属于该库），无 selection 走整库（向后兼容）；`Exam.blueprint Json?`（迁移 `20260703081020_exam_compose_blueprint`）存规则快照，整库为 null
+- [S14] **全班同卷**：组卷时抽一次落快照，无 seed（区别学生端 seededShuffle）；明细去重=按行从上到下抽、抽过排除，**行顺序影响结果**（已与用户确认）
+- [S14] 前端 `src/components/teacher/exams/compose-step.tsx`（受控，draft 由向导持有跨步不丢；dims loading 派生自 `mode!=="WHOLE" && !dims && !dimsError`，避免 effect 内同步 setState）；接入 `create-exam-wizard.tsx` Step1，`canProceed` 对灵活组卷要求先预览生成 selection
+- [S14] **联调坑**：`prisma migrate/generate` 后运行中的 `npm run dev` 仍用内存里的旧 Prisma Client（不识别新字段致 500），**必须重启 dev server**
+- [S14] 仍不使用二期 `KnowledgePoint`/`QuestionKnowledgePoint` M2M；维度统计与匹配基于平铺 `Question.knowledgePoint` 字符串（**要按知识点组卷，题库知识点标注需干净**）
 
 **下一步具体任务**：
-一期功能与部署已全部完成。可选后续：正式服务器上线（改强口令 + `NEXTAUTH_SECRET` + 启用 HTTPS，详见 `document/部署文档.md` §7/§10）；HTTPS 上线后 PWA 自动可安装，国内安卓可用 PWABuilder 打包 TWA APK；二期简答题（`SHORT_ANSWER` + 人工批改流程）；登录频率限制加固。
+一期功能（含 S14 灵活组卷）与部署已全部完成。可选后续：考试详情页展示 blueprint（规则回看）/「换一批」独立按钮/快捷配额表随难度筛选实时下修库存；正式服务器上线（改强口令 + `NEXTAUTH_SECRET` + 启用 HTTPS，详见 `document/部署文档.md` §7/§10）；二期简答题（`SHORT_ANSWER` + 人工批改流程）；登录频率限制加固。
 
 ---
 

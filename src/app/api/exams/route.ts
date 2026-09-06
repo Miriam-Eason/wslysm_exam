@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
   const {
     name, type, bankId, allowRepeat, repeatLimit, deadline,
     timeLimitSec, shuffleQuestions, shuffleOptions, classIds, defaultScore,
+    selection, blueprint,
   } = parsed.data;
 
   // 验证题库属于该教师
@@ -64,6 +65,22 @@ export async function POST(req: NextRequest) {
   });
   if (!bank) return fail("NOT_FOUND", "题库不存在或无权访问");
   if (bank.questions.length === 0) return fail("VALIDATION", "该题库没有题目，无法组卷");
+
+  // 组卷范围：selection 存在=灵活组卷（按选题快照），否则=整库快照
+  // { question, score } 元组，数组顺序即卷面题序
+  const bankById = new Map(bank.questions.map((q) => [q.id, q]));
+  let snapshotSource: { q: (typeof bank.questions)[number]; score: number }[];
+  if (selection) {
+    const missing = selection.filter((s) => !bankById.has(s.questionId));
+    if (missing.length > 0) {
+      return fail("VALIDATION", "选题包含不属于该题库的题目", {
+        missingIds: missing.map((s) => s.questionId),
+      });
+    }
+    snapshotSource = selection.map((s) => ({ q: bankById.get(s.questionId)!, score: s.score }));
+  } else {
+    snapshotSource = bank.questions.map((q) => ({ q, score: defaultScore }));
+  }
 
   // 验证班级均在教师授课列表内
   const teachingClasses = await prisma.classTeacher.findMany({
@@ -86,15 +103,16 @@ export async function POST(req: NextRequest) {
         shuffleQuestions,
         shuffleOptions,
         createdBy: g.userId,
+        blueprint: blueprint ? (blueprint as Prisma.InputJsonValue) : Prisma.DbNull,
       },
     });
 
     await tx.examQuestion.createMany({
-      data: bank.questions.map((q, i) => ({
+      data: snapshotSource.map(({ q, score }, i) => ({
         examId: created.id,
         sourceId: q.id,
         order: i + 1,
-        score: defaultScore,
+        score,
         type: q.type,
         stem: q.stem,
         options: q.options !== null ? (q.options as Prisma.InputJsonValue) : Prisma.DbNull,

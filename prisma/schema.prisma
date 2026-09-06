@@ -190,6 +190,7 @@ model Exam {
   shuffleOptions   Boolean   @default(false)
   createdBy        Int
   teacher          Teacher   @relation(fields: [createdBy], references: [id])
+  blueprint        Json? // 组卷蓝图快照（{mode, rules[]}）；整库组卷为 null，仅供审计/回看
   createdAt        DateTime  @default(now())
   deletedAt        DateTime? // 已有作答时软删除
 
