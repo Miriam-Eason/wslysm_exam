@@ -74,6 +74,7 @@ export default function ResultPage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const attemptId = searchParams.get("attemptId");
   const [data, setData] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,12 +86,7 @@ export default function ResultPage({
   }, [params]);
 
   useEffect(() => {
-    const attemptId = searchParams.get("attemptId");
-    if (!attemptId) {
-      setError("缺少作答 ID");
-      setLoading(false);
-      return;
-    }
+    if (!attemptId) return;
     fetch(`/api/student/attempts/${attemptId}/result`)
       .then(async (r) => {
         const json = await r.json();
@@ -102,7 +98,15 @@ export default function ResultPage({
       })
       .catch(() => setError("网络错误"))
       .finally(() => setLoading(false));
-  }, [searchParams]);
+  }, [attemptId]);
+
+  if (!attemptId) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center px-6 text-center text-secondary">
+        缺少作答 ID
+      </div>
+    );
+  }
 
   if (loading) {
     return (

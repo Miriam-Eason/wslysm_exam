@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, X, Check } from "lucide-react";
@@ -40,6 +40,48 @@ export type EditableQuestion = {
   knowledgePoint: string | null;
 };
 
+function initialFormState(question: EditableQuestion | null) {
+  const type = question?.type ?? "SINGLE_CHOICE";
+  const choiceQuestion =
+    question &&
+    (question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE");
+  const options = choiceQuestion ? (question.options ?? []).map((option) => option.text) : ["", ""];
+  const answer = choiceQuestion ? ((question.answer as string[]) ?? []) : [];
+  const correctIdx = new Set(
+    choiceQuestion
+      ? (question.options ?? [])
+          .map((option, index) => (answer.includes(option.key) ? index : -1))
+          .filter((index) => index >= 0)
+      : [],
+  );
+
+  return {
+    type,
+    stem: question?.stem ?? "",
+    difficulty: question?.difficulty ?? "MEDIUM",
+    analysis: question?.analysis ?? "",
+    options,
+    correctIdx,
+    tfAnswer:
+      question?.type === "TRUE_FALSE"
+        ? (((question.answer as string[])?.[0] as "T" | "F") ?? "T")
+        : ("T" as const),
+    blanks:
+      question?.type === "FILL_BLANK"
+        ? ((question.answer as string[][]) ?? [[""]]).map((blank) => blank.join("/"))
+        : [""],
+  } satisfies {
+    type: QType;
+    stem: string;
+    difficulty: Diff;
+    analysis: string;
+    options: string[];
+    correctIdx: Set<number>;
+    tfAnswer: "T" | "F";
+    blanks: string[];
+  };
+}
+
 export function QuestionFormDialog({
   bankId,
   question,
@@ -52,45 +94,16 @@ export function QuestionFormDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const router = useRouter();
-  const [type, setType] = useState<QType>("SINGLE_CHOICE");
-  const [stem, setStem] = useState("");
-  const [difficulty, setDifficulty] = useState<Diff>("MEDIUM");
-  const [analysis, setAnalysis] = useState("");
-  const [options, setOptions] = useState<string[]>(["", ""]);
-  const [correctIdx, setCorrectIdx] = useState<Set<number>>(new Set());
-  const [tfAnswer, setTfAnswer] = useState<"T" | "F">("T");
-  const [blanks, setBlanks] = useState<string[]>([""]);
+  const initial = initialFormState(question);
+  const [type, setType] = useState<QType>(initial.type);
+  const [stem, setStem] = useState(initial.stem);
+  const [difficulty, setDifficulty] = useState<Diff>(initial.difficulty);
+  const [analysis, setAnalysis] = useState(initial.analysis);
+  const [options, setOptions] = useState<string[]>(initial.options);
+  const [correctIdx, setCorrectIdx] = useState<Set<number>>(initial.correctIdx);
+  const [tfAnswer, setTfAnswer] = useState<"T" | "F">(initial.tfAnswer);
+  const [blanks, setBlanks] = useState<string[]>(initial.blanks);
   const [busy, setBusy] = useState(false);
-
-  // 打开时初始化：编辑→回填；新建→重置
-  useEffect(() => {
-    if (!open) return;
-    if (question) {
-      setType(question.type);
-      setStem(question.stem);
-      setDifficulty(question.difficulty);
-      setAnalysis(question.analysis ?? "");
-      if (question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE") {
-        const opts = question.options ?? [];
-        const ans = (question.answer as string[]) ?? [];
-        setOptions(opts.map((o) => o.text));
-        setCorrectIdx(new Set(opts.map((o, i) => (ans.includes(o.key) ? i : -1)).filter((i) => i >= 0)));
-      } else if (question.type === "TRUE_FALSE") {
-        setTfAnswer(((question.answer as string[])?.[0] as "T" | "F") ?? "T");
-      } else {
-        setBlanks(((question.answer as string[][]) ?? [[""]]).map((b) => b.join("/")));
-      }
-    } else {
-      setType("SINGLE_CHOICE");
-      setStem("");
-      setDifficulty("MEDIUM");
-      setAnalysis("");
-      setOptions(["", ""]);
-      setCorrectIdx(new Set());
-      setTfAnswer("T");
-      setBlanks([""]);
-    }
-  }, [open, question]);
 
   function switchType(t: QType) {
     setType(t);

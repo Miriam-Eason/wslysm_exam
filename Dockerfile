@@ -1,11 +1,11 @@
-# syntax=docker/dockerfile:1
 # ============================================================================
 # 智慧题库与智能练测系统 —— 生产镜像（多阶段构建，最终镜像仅含运行期产物）
 # 基础镜像用 Debian slim 而非 alpine：Prisma 在 glibc + openssl3 上零折腾。
 # ============================================================================
 
 # ---------- 公共基础层 ----------
-FROM node:22-slim AS base
+ARG NODE_IMAGE=node:22-slim
+FROM ${NODE_IMAGE} AS base
 # 国内构建加速：Debian 源 → 镜像（默认腾讯云内网，在腾讯云服务器上最快）；
 # npm / Prisma 引擎 → 淘宝镜像。境外构建时可用 --build-arg DEBIAN_MIRROR=deb.debian.org 还原。
 ARG DEBIAN_MIRROR=mirrors.tencentyun.com
@@ -30,8 +30,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # 构建期占位环境变量，避免任何早期实例化因缺变量报错（运行期由 compose 注入真实值）
-ENV DATABASE_URL="mysql://placeholder:placeholder@localhost:3306/placeholder" \
-    NEXTAUTH_SECRET="build-time-placeholder"
+ENV DATABASE_URL="mysql://placeholder:placeholder@localhost:3306/placeholder"
 # 生成 Prisma Client（linux 引擎）+ 产出 Next standalone
 RUN npx prisma generate \
   && npm run build

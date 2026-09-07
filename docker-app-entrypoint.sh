@@ -3,6 +3,11 @@
 # （主机名固定为 compose 服务名 db）。这样部署时只需填数据库口令，无需手拼连接串。
 set -e
 
+: "${MYSQL_USER:?MYSQL_USER is required}"
+: "${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}"
+: "${MYSQL_DATABASE:?MYSQL_DATABASE is required}"
+: "${AUTH_SECRET:?AUTH_SECRET is required}"
+
 : "${DATABASE_URL:=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}}"
 export DATABASE_URL
 

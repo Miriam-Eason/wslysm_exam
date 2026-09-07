@@ -179,10 +179,7 @@ function ExamCard({
   onStart: () => void;
 }) {
   const isPractice = exam.type === "PRACTICE";
-  const canStart =
-    exam.status === "NOT_STARTED" ||
-    exam.status === "IN_PROGRESS" ||
-    exam.canRepeat;
+  const [renderedAt] = useState(() => Date.now());
 
   const statusConfig = {
     NOT_STARTED: {
@@ -281,7 +278,7 @@ function ExamCard({
                   className="flex items-center gap-1"
                   style={{
                     color:
-                      new Date(exam.deadline).getTime() - Date.now() < 86400000
+                      new Date(exam.deadline).getTime() - renderedAt < 86400000
                         ? "#ff3b30"
                         : undefined,
                   }}

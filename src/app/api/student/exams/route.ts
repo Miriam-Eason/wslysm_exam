@@ -1,11 +1,10 @@
 // GET /api/student/exams — 学生可见考试列表（PRD §11 S8）
 // 通过 Enrollment∩ExamClass 确定可见范围，deadline 过滤，返回作答状态
-import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const g = await requireApiRole("student");
   if (g.error) return g.error;
   const studentId = g.userId;

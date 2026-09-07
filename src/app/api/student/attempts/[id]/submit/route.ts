@@ -54,8 +54,6 @@ export async function POST(
       score: true,
     },
   });
-  const qMap = new Map(examQuestions.map((q) => [q.id, q]));
-
   // 3. 构建 answers map（含未作答的空）
   const answersMap = new Map(
     answers.map((a) => [a.examQuestionId, a.chosen]),

@@ -531,7 +531,10 @@ export function ExamDetail({ exam: initial }: { exam: Exam }) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy}>取消</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); deleteQTarget && deleteQuestion(deleteQTarget); }}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteQTarget) deleteQuestion(deleteQTarget);
+              }}
               disabled={busy}
             >
               {busy ? "移除中…" : "确认移除"}

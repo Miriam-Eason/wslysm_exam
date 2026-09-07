@@ -19,15 +19,22 @@ function normalize(s: string): string {
 }
 
 // 判分（与 S9 grading 口径一致：选择类集合相等，填空全空命中才算对）
-function grade(type: QuestionType, answer: any, chosen: any): boolean {
+function grade(type: QuestionType, answer: unknown, chosen: unknown): boolean {
+  if (!Array.isArray(answer) || !Array.isArray(chosen)) return false;
   if (type === QuestionType.FILL_BLANK) {
-    const ans: string[][] = answer;
-    const cho: string[] = chosen;
-    if (!Array.isArray(cho) || cho.length !== ans.length) return false;
-    return ans.every((accept, i) => accept.map(normalize).includes(normalize(cho[i] ?? "")));
+    if (chosen.length !== answer.length) return false;
+    return answer.every(
+      (accepted, i) =>
+        Array.isArray(accepted) &&
+        accepted.every((value) => typeof value === "string") &&
+        typeof chosen[i] === "string" &&
+        accepted.map(normalize).includes(normalize(chosen[i])),
+    );
   }
-  const a = [...(answer as string[])].sort();
-  const c = [...(chosen as string[])].sort();
+  if (!answer.every((value) => typeof value === "string")) return false;
+  if (!chosen.every((value) => typeof value === "string")) return false;
+  const a = [...answer].sort();
+  const c = [...chosen].sort();
   return a.length === c.length && a.every((v, i) => v === c[i]);
 }
 
@@ -55,7 +62,7 @@ async function main() {
   const adminHash = await bcrypt.hash("admin123", 10);
   const teacherHash = await bcrypt.hash("teacher123", 10);
 
-  const admin = await prisma.teacher.create({
+  await prisma.teacher.create({
     data: { username: "admin", passwordHash: adminHash, name: "超级管理员", isAdmin: true },
   });
   const teacher1 = await prisma.teacher.create({
@@ -225,7 +232,7 @@ async function main() {
   // ---------- 作答记录 + 错题 ----------
   console.log("✍️  生成作答记录...");
   // 三名学生的作答（学生作答数组按 examQuestion.order 对应）
-  const submissions: Record<number, any[]> = {
+  const submissions: Record<number, string[][]> = {
     [students[0].id]: [["C"], ["A", "B", "D"], ["F"], ["北京", "上海"], ["B"]], // 全对 → 100
     [students[1].id]: [["A"], ["A", "B", "D"], ["F"], ["北京", "上海"], ["B"]], // 第1题错 → 80
     [students[2].id]: [["C"], ["A", "B"], ["T"], ["北京", "上海"], ["B"]], // 第2、3题错 → 60

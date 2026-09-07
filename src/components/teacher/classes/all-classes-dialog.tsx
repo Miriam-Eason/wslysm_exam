@@ -34,10 +34,7 @@ export function AllClassesDialog({
   const [joining, setJoining] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setList(null);
-      return;
-    }
+    if (!open) return;
     (async () => {
       try {
         const res = await fetch("/api/classes?scope=all");
@@ -49,6 +46,11 @@ export function AllClassesDialog({
       }
     })();
   }, [open]);
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) setList(null);
+    onOpenChange(nextOpen);
+  }
 
   async function join(c: AllClass) {
     setJoining(c.id);
@@ -67,7 +69,7 @@ export function AllClassesDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>全校班级</DialogTitle>

@@ -1,10 +1,9 @@
 // GET /api/student/wrong-questions — 错题本列表（按考试分组，含答案供回顾，PRD §11 S9）
-import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const g = await requireApiRole("student");
   if (g.error) return g.error;
   const studentId = g.userId;

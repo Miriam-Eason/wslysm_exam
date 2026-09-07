@@ -53,10 +53,11 @@
   --radius-field: 1rem;
 }
 
-/* 字体：Inter（next/font 注入 --font-inter），CJK 回退 PingFang / 微软雅黑 */
+/* 本地系统字体栈：避免生产构建时依赖 Google Fonts 网络。 */
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "SF Pro Display", "PingFang SC", "Microsoft YaHei", "Helvetica Neue",
+    Arial, sans-serif;
 }
 
 html {

@@ -3,9 +3,14 @@ name: wxlysm-exam-sys
 services:
   # ---------- MySQL 8 ----------
   db:
-    image: mysql:8.0
+    # 旧服务器安全默认锁定 8.0.46。经备份/兼容检查后才可在环境文件中改为 mysql:8.4。
+    image: ${MYSQL_IMAGE:-mysql:8.0.46}
     restart: unless-stopped
-    env_file: .env.production
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env.production}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in .env.production}
+      MYSQL_USER: ${MYSQL_USER:?set MYSQL_USER in .env.production}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env.production}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -28,7 +33,13 @@ services:
       context: .
       dockerfile: Dockerfile
       target: migrator
-    env_file: .env.production
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in .env.production}
+      MYSQL_USER: ${MYSQL_USER:?set MYSQL_USER in .env.production}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env.production}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy
@@ -42,19 +53,37 @@ services:
       dockerfile: Dockerfile
       target: runner
     restart: unless-stopped
-    env_file: .env.production
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in .env.production}
+      MYSQL_USER: ${MYSQL_USER:?set MYSQL_USER in .env.production}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env.production}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env.production}
+      AUTH_URL: ${AUTH_URL:-https://tk.wxlysm.com.cn}
     depends_on:
       migrate:
         condition: service_completed_successfully
     expose:
       - "3000"        # 仅暴露给 nginx，不直接对外
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   # ---------- Nginx 反向代理 ----------
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     ports:
       - "80:80"
       # 启用 HTTPS 时打开（并在 nginx/conf.d 中配置 443 server 块）：

@@ -4,7 +4,6 @@ import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 import { questionInputSchema, type QuestionInput } from "@/lib/validations/question";
 import { buildQuestionData } from "@/lib/question-data";
-import { contentHash as computeHash } from "@/lib/question-hash";
 
 // --- 类型定义 ---
 

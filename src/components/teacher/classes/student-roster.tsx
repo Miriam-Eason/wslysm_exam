@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -44,7 +44,10 @@ export function StudentRoster({
 
   const allChecked = students.length > 0 && students.every((s) => selected.has(s.id));
   const someChecked = selected.size > 0 && !allChecked;
-  if (headerRef.current) headerRef.current.indeterminate = someChecked;
+
+  useEffect(() => {
+    if (headerRef.current) headerRef.current.indeterminate = someChecked;
+  }, [someChecked]);
 
   function toggle(id: number) {
     setSelected((prev) => {

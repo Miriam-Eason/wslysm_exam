@@ -35,7 +35,6 @@ import {
   QUESTION_TYPE_LABELS,
   DIFFICULTY_LABELS,
   answerSummary,
-  type QType,
   type Diff,
 } from "@/lib/question";
 
@@ -237,7 +236,13 @@ export function QuestionList({
         </div>
       )}
 
-      <QuestionFormDialog bankId={bankId} question={editing} open={formOpen} onOpenChange={setFormOpen} />
+      <QuestionFormDialog
+        key={formOpen ? `open-${editing?.id ?? "new"}` : "closed"}
+        bankId={bankId}
+        question={editing}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+      />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>

@@ -1,5 +1,5 @@
-// 生产环境初始化脚本（幂等）—— 仅确保两个超管账号存在，不写入任何测试数据。
-// 由 docker-entrypoint.sh 在每次容器启动时执行；已存在的账号不会被覆盖。
+// 生产环境一次性管理员引导。
+// 未提供 BOOTSTRAP_ADMIN_* 时安全跳过；已存在的账号绝不会被重置密码。
 //
 // 说明：使用纯 ESM + @prisma/client（standalone 已打包），无需 tsx，可直接 `node` 运行。
 import { PrismaClient } from "@prisma/client";
@@ -7,29 +7,34 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const DEFAULT_ADMIN_PWD = "wxlysm";
-const ADMINS = [
-  { username: "admin01", name: "管理员一" },
-  { username: "admin02", name: "管理员二" },
-];
-
 async function main() {
-  const passwordHash = await bcrypt.hash(DEFAULT_ADMIN_PWD, 10);
+  const username = process.env.BOOTSTRAP_ADMIN_USERNAME?.trim();
+  const name = process.env.BOOTSTRAP_ADMIN_NAME?.trim();
+  const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
 
-  for (const a of ADMINS) {
-    await prisma.teacher.upsert({
-      where: { username: a.username },
-      // 已存在则不动：避免每次重启重置管理员改过的密码
-      update: {},
-      create: {
-        username: a.username,
-        name: a.name,
-        passwordHash,
-        isAdmin: true,
-      },
-    });
-    console.log(`  ✓ 管理员就绪：${a.username}`);
+  const supplied = [username, name, password].filter(Boolean).length;
+  if (supplied === 0) {
+    console.log("  → 未配置 BOOTSTRAP_ADMIN_*，跳过管理员引导。");
+    return;
   }
+  if (supplied !== 3) {
+    throw new Error("BOOTSTRAP_ADMIN_USERNAME/NAME/PASSWORD 必须同时提供");
+  }
+  if (password.length < 12) {
+    throw new Error("BOOTSTRAP_ADMIN_PASSWORD 至少需要 12 个字符");
+  }
+
+  const existing = await prisma.teacher.findUnique({ where: { username } });
+  if (existing) {
+    console.log(`  → 管理员账号 ${username} 已存在，保持原密码。`);
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.teacher.create({
+    data: { username, name, passwordHash, isAdmin: true },
+  });
+  console.log(`  ✓ 管理员已创建：${username}`);
 }
 
 main()

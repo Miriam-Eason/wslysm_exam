@@ -45,6 +45,7 @@ next-env.d.ts
 # 数据库备份与本地 SQL
 /backup/
 *.sql
+!/prisma/migrations/**/*.sql
 
 # nginx 证书（部署阶段，含私钥）
 /nginx/certs/

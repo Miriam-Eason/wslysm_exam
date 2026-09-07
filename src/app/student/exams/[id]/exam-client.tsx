@@ -76,6 +76,7 @@ export function ExamClient({ examId }: { examId: number }) {
   const [showGrid, setShowGrid] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const elapsedRef = useRef(0);
   const answersRef = useRef<Answers>({});
@@ -88,25 +89,29 @@ export function ExamClient({ examId }: { examId: number }) {
 
   // ── Load exam ──────────────────────────────────────────────────────────────
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    fetch(`/api/student/exams/${examId}/attempt`, { method: "POST" })
-      .then(async (r) => {
-        const json = await r.json();
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const response = await fetch(`/api/student/exams/${examId}/attempt`, {
+          method: "POST",
+        });
+        const json = await response.json();
+        if (cancelled) return;
         if (!json.ok) {
           setError(json.error?.message ?? "无法加载考试");
           return;
         }
         const d: AttemptData = json.data;
         const init: Answers = {};
-        for (const [k, v] of Object.entries(d.drafts)) {
-          init[Number(k)] = v;
+        for (const [key, value] of Object.entries(d.drafts)) {
+          init[Number(key)] = value;
         }
         // Initialize fill blank blanks
-        for (const q of d.questions) {
-          if (q.type === "FILL_BLANK" && init[q.id] == null) {
-            init[q.id] = initFillBlanks(q);
+        for (const question of d.questions) {
+          if (question.type === "FILL_BLANK" && init[question.id] == null) {
+            init[question.id] = initFillBlanks(question);
           }
         }
         setData(d);
@@ -115,12 +120,24 @@ export function ExamClient({ examId }: { examId: number }) {
         elapsedRef.current = d.elapsedSec;
         setElapsed(d.elapsedSec);
         attemptIdRef.current = d.attemptId;
-      })
-      .catch(() => setError("网络错误，请重试"))
-      .finally(() => setLoading(false));
-  }, [examId]);
+      } catch {
+        if (!cancelled) setError("网络错误，请重试");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
 
-  useEffect(() => { load(); }, [load]);
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [examId, reloadKey]);
+
+  function retryLoad() {
+    setLoading(true);
+    setError(null);
+    setReloadKey((key) => key + 1);
+  }
 
   // ── Submit logic ───────────────────────────────────────────────────────────
 
@@ -229,7 +246,7 @@ export function ExamClient({ examId }: { examId: number }) {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) return <LoadingScreen />;
-  if (error) return <ErrorScreen message={error} onBack={() => router.push("/student")} onRetry={load} />;
+  if (error) return <ErrorScreen message={error} onBack={() => router.push("/student")} onRetry={retryLoad} />;
   if (!data) return null;
 
   const q = data.questions[idx];

@@ -246,7 +246,7 @@ export function ExamList({
           </div>
           <h3 className="text-lg font-semibold text-on-surface">还没有考试或练习</h3>
           <p className="max-w-xs text-sm text-on-surface-variant">
-            通过"组卷向导"从题库中选择题目生成试卷快照。
+            通过「组卷向导」从题库中选择题目生成试卷快照。
           </p>
           <Button asChild variant="outline" className="mt-2">
             <Link href="/teacher/exams/new">
