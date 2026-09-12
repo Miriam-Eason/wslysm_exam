@@ -12,7 +12,7 @@ import type { Role } from "@/lib/validations/auth";
 
 const LOGIN_PATH: Record<Role, string> = {
   teacher: "/teacher/login",
-  admin: "/admin/login",
+  admin: "/superadmin",
   student: "/student/login",
 };
 

@@ -1,11 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 
-// 入口落地页：三端登录导航（便于联调与角色切换）
+// 入口落地页：仅公开学生、教师登录导航。
 const PORTALS = [
   { href: "/student/login", title: "学生端", desc: "做题、练习、考试、错题本" },
   { href: "/teacher/login", title: "教师端", desc: "班级、题库、组卷、成绩统计" },
-  { href: "/admin/login", title: "超管端", desc: "教师 / 学生账号管理" },
 ];
 
 export default function Home() {
@@ -27,7 +26,7 @@ export default function Home() {
         <p className="text-on-surface-variant">请选择登录入口</p>
       </header>
 
-      <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-3">
+      <div className="grid w-full max-w-2xl gap-4 sm:grid-cols-2">
         {PORTALS.map((p) => (
           <Link
             key={p.href}

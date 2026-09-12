@@ -67,7 +67,7 @@ export function AdminSidebar({ userName }: { userName: string }) {
             <p className="text-xs text-on-surface-variant">超级管理员</p>
           </div>
         </div>
-        <SignOutButton redirectTo="/admin/login" />
+        <SignOutButton redirectTo="/superadmin" />
       </div>
     </aside>
   );
