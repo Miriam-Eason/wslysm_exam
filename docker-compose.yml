@@ -29,10 +29,13 @@ services:
   # ---------- 一次性迁移任务（迁移 + 初始化管理员，跑完即退出）----------
   # 用含完整依赖的 builder 镜像执行，Prisma CLI 可正常工作；app 镜像因此保持精简。
   migrate:
+    image: wxlysm-exam-migrator:${RELEASE_SHA:-dev}
     build:
       context: .
       dockerfile: Dockerfile
       target: migrator
+      args:
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-mirrors.aliyun.com}
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in .env.production}
       MYSQL_USER: ${MYSQL_USER:?set MYSQL_USER in .env.production}
@@ -48,10 +51,13 @@ services:
 
   # ---------- Next.js 应用（standalone）----------
   app:
+    image: wxlysm-exam-app:${RELEASE_SHA:-dev}
     build:
       context: .
       dockerfile: Dockerfile
       target: runner
+      args:
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-mirrors.aliyun.com}
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in .env.production}
@@ -89,7 +95,8 @@ services:
       # 启用 HTTPS 时打开（并在 nginx/conf.d 中配置 443 server 块）：
       # - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${NGINX_CONFIG_DIR:-./nginx/conf.d}:/etc/nginx/conf.d:ro
+      - ${MAINTENANCE_DIR:-./nginx/maintenance}:/etc/nginx/maintenance:ro
       # 证书目录（已被 .gitignore 忽略，含私钥）：
       # - ./nginx/certs:/etc/nginx/certs:ro
 

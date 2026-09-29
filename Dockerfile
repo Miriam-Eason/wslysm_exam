@@ -6,9 +6,9 @@
 # ---------- 公共基础层 ----------
 ARG NODE_IMAGE=node:22-slim
 FROM ${NODE_IMAGE} AS base
-# 国内构建加速：Debian 源 → 镜像（默认腾讯云内网，在腾讯云服务器上最快）；
-# npm / Prisma 引擎 → 淘宝镜像。境外构建时可用 --build-arg DEBIAN_MIRROR=deb.debian.org 还原。
-ARG DEBIAN_MIRROR=mirrors.tencentyun.com
+# 国内构建加速：Debian 源默认使用阿里云镜像；
+# npm / Prisma 引擎使用 npmmirror。境外构建可设置 DEBIAN_MIRROR=deb.debian.org。
+ARG DEBIAN_MIRROR=mirrors.aliyun.com
 ENV NEXT_TELEMETRY_DISABLED=1 \
     npm_config_registry=https://registry.npmmirror.com \
     PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
