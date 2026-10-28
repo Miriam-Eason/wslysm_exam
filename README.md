@@ -44,6 +44,8 @@ npm run dev         # Mac 上运行 Next.js
 docker compose -f docker-compose.dev.yml down -v
 ```
 
+需要从局域网访问开发服务时，在本机 `.env.local` 中设置 `DEV_ALLOWED_ORIGINS`，填写访问开发服务使用的主机名或 IP；多个值用英文逗号分隔。修改后重启 `npm run dev`。该配置仅影响 Next.js 开发资源访问，不会改变数据库绑定地址或生产配置。
+
 ## 提交前检查
 
 ```bash

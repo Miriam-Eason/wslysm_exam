@@ -58,7 +58,7 @@ export function LoginForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <label
           htmlFor="identifier"

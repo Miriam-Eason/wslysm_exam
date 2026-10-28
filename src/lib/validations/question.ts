@@ -54,6 +54,10 @@ export const questionInputSchema = z
       if (new Set(keys).size !== keys.length) {
         ctx.addIssue({ code: "custom", path: ["options"], message: "选项编号重复" });
       }
+      const texts = v.options.map((o) => o.text.trim().replace(/\s+/g, " "));
+      if (new Set(texts).size !== texts.length) {
+        ctx.addIssue({ code: "custom", path: ["options"], message: "选项内容重复" });
+      }
       const keySet = new Set(keys);
       for (const a of v.answer) {
         if (!keySet.has(a)) {

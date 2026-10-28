@@ -151,10 +151,10 @@ npx prisma db seed                       # 灌测试数据
 | GET | `/api/banks/:id/questions` | 分页+按 type/difficulty 过滤 | 题目列表 |
 | POST | `/api/banks/:id/questions` | 单题 JSON | 新建题目 |
 | PATCH/DELETE | `/api/questions/:id` | — | 改 / 删原题（不影响已组卷快照） |
-| POST | `/api/banks/:id/questions/import/preview` | `multipart` xlsx 或 JSON | dry-run：逐行 Zod 按题型分流校验 + contentHash 查重，返回 `{ importable N, invalid M(行号+原因), duplicates K }` |
-| POST | `/api/banks/:id/questions/import/confirm` | 预检数据 | createMany(skipDuplicates)，打 importBatchId；返回 `{ created, skipped }` |
+| POST | `/api/banks/:id/questions/import/preview` | `multipart` 多个 `files`（xlsx） | 全批预检：逐文件返回汇总及题库重复、批次重复、答案冲突、格式异常的行号和原因 |
+| POST | `/api/banks/:id/questions/import/confirm` | `multipart` 重传同一批 `files` | 重新解析及查重，按文件事务分批写入；返回逐文件状态与实际数量 |
 
-> 题库导入严格按《题库导入方案设计》：bankId 取自路径上下文；Excel→归一化 JSON→Zod→createMany；先建分类避免 N+1；`@@unique([bankId, contentHash])` 去重。
+> 题库导入的 bankId 取自路径上下文；最多 10 个文件，每个 20 MiB、2 万题，每批 10 万题。按新身份规则比较历史题和批次内题目，选择题选项顺序不影响身份；答案冲突需核对，不覆盖已有题目。历史哈希保留，新写入使用 v2 身份哈希与库内唯一约束；创建、编辑和导入写入时锁定题库。
 
 **组卷 / 考试**
 | Method | Path | 入参 | 出参 |
