@@ -1,9 +1,10 @@
 // 题目导入：解析 xlsx（四题型多 Sheet）+ dry-run 预检（不写库）。
 // preview 与 confirm 共用同一套解析与分析逻辑，保证一致与安全。
 import ExcelJS from "exceljs";
-import { prisma } from "@/lib/prisma";
 import { questionInputSchema, type QuestionInput } from "@/lib/validations/question";
 import { buildQuestionData } from "@/lib/question-data";
+import { questionAnswerSignature } from "@/lib/question-hash";
+import { readQuestionWorkbook } from "@/lib/import/question-workbook";
 
 // --- 类型定义 ---
 
@@ -11,29 +12,8 @@ export type QuestionRowResult =
   | { ok: true; input: QuestionInput; contentHash: string; rowNo: number; sheet: string }
   | { ok: false; rowNo: number; sheet: string; stemPreview: string; reason: string };
 
-export type ImportableQuestion = {
-  rowNo: number;
-  sheet: string;
-  contentHash: string;
-  data: ReturnType<typeof buildQuestionData>;
-};
-
-export type AnalysisResult = {
-  importable: ImportableQuestion[];
-  duplicates: { rowNo: number; sheet: string; contentHash: string }[]; // 已在题库中
-  fileDups: { rowNo: number; sheet: string; firstRow: number }[]; // 文件内重复
-  invalid: { rowNo: number; sheet: string; stemPreview: string; reason: string }[];
-  truncated: boolean;
-  summary: {
-    total: number;
-    importable: number;
-    duplicates: number;
-    fileDups: number;
-    invalid: number;
-  };
-};
-
-const MAX_IMPORT_ROWS = 500;
+export const MAX_FILE_ROWS = 20_000;
+export const MAX_BATCH_ROWS = 100_000;
 const BLANK_SEP = "|||"; // 填空可接受答案分隔符
 
 // --- 工具函数 ---
@@ -309,8 +289,7 @@ const SHEET_PARSERS: Record<string, (ws: ExcelJS.Worksheet) => QuestionRowResult
 // --- 主入口 ---
 
 export async function parseQuestionWorkbook(buf: Buffer): Promise<QuestionRowResult[]> {
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buf as unknown as Parameters<typeof wb.xlsx.load>[0]);
+  const wb = await readQuestionWorkbook(buf);
 
   const results: QuestionRowResult[] = [];
   for (const ws of wb.worksheets) {
@@ -321,77 +300,76 @@ export async function parseQuestionWorkbook(buf: Buffer): Promise<QuestionRowRes
   return results;
 }
 
-export async function analyzeQuestionImport(
-  rows: QuestionRowResult[],
-  bankId: number,
-): Promise<AnalysisResult> {
-  const truncated = rows.length > MAX_IMPORT_ROWS;
-  const limited = truncated ? rows.slice(0, MAX_IMPORT_ROWS) : rows;
+// Each row is accounted for exactly once, including cross-file conflicts.
+export type ImportFileInput = {
+  index: number;
+  name: string;
+  rows: QuestionRowResult[];
+  error?: string;
+};
+type IssueKind = "duplicate" | "fileDup" | "conflict" | "invalid";
+type Summary = { total: number; importable: number; duplicates: number; fileDups: number; conflicts: number; invalid: number };
+export type ImportFileAnalysis = {
+  index: number;
+  name: string;
+  error?: string;
+  summary: Summary;
+  issues: { kind: IssueKind; sheet: string; rowNo: number; reason: string }[];
+  importable: Extract<QuestionRowResult, { ok: true }>[];
+};
+const emptySummary = (): Summary => ({ total: 0, importable: 0, duplicates: 0, fileDups: 0, conflicts: 0, invalid: 0 });
 
-  const invalid: AnalysisResult["invalid"] = [];
-  const fileDups: AnalysisResult["fileDups"] = [];
-  const seenHashes = new Map<string, { rowNo: number; sheet: string }>(); // hash → 首次出现位置
-  const validRows: Extract<QuestionRowResult, { ok: true }>[] = [];
-
-  for (const r of limited) {
-    if (!r.ok) {
-      invalid.push({ rowNo: r.rowNo, sheet: r.sheet, stemPreview: r.stemPreview, reason: r.reason });
-      continue;
+export function analyzeQuestionImportBatch(
+  files: ImportFileInput[],
+  existing: Map<string, Set<string>>,
+): { files: ImportFileAnalysis[]; summary: Summary } {
+  const results: ImportFileAnalysis[] = files.map(f => ({
+    index: f.index, name: f.name, error: f.error, summary: { ...emptySummary(), total: f.rows.length },
+    issues: [], importable: [],
+  }));
+  type Candidate = { file: ImportFileAnalysis; row: Extract<QuestionRowResult, { ok: true }>; signature: string };
+  const groups = new Map<string, Candidate[]>();
+  for (const [i, file] of files.entries()) {
+    const result = results[i];
+    if (file.error) continue;
+    for (const row of file.rows) {
+      if (!row.ok) {
+        result.summary.invalid++;
+        result.issues.push({ kind: "invalid", sheet: row.sheet, rowNo: row.rowNo, reason: `${row.stemPreview}：${row.reason}` });
+        continue;
+      }
+      const group = groups.get(row.contentHash) ?? [];
+      group.push({ file: result, row, signature: questionAnswerSignature(row.input) });
+      groups.set(row.contentHash, group);
     }
-    const existing = seenHashes.get(r.contentHash);
-    if (existing) {
-      fileDups.push({ rowNo: r.rowNo, sheet: r.sheet, firstRow: existing.rowNo });
-      continue;
-    }
-    seenHashes.set(r.contentHash, { rowNo: r.rowNo, sheet: r.sheet });
-    validRows.push(r);
   }
-
-  // 批量查 DB：哪些 hash 已在题库中
-  const hashes = validRows.map((r) => r.contentHash);
-  const existing = hashes.length
-    ? await prisma.question.findMany({
-        where: { bankId, contentHash: { in: hashes } },
-        select: { contentHash: true },
-      })
-    : [];
-  const existingSet = new Set(existing.map((q) => q.contentHash));
-
-  const importable: ImportableQuestion[] = [];
-  const duplicates: AnalysisResult["duplicates"] = [];
-
-  for (const r of validRows) {
-    if (existingSet.has(r.contentHash)) {
-      duplicates.push({ rowNo: r.rowNo, sheet: r.sheet, contentHash: r.contentHash });
+  for (const [identity, group] of groups) {
+    const signatures = new Set(group.map(item => item.signature));
+    const previous = existing.get(identity);
+    const conflict = signatures.size > 1 || (previous && [...signatures].some(sig => previous.size !== 1 || !previous.has(sig)));
+    if (conflict) {
+      const first = group[0];
+      for (const item of group) {
+        item.file.summary.conflicts++;
+        const location = group.length > 1 ? `（批次中 ${first.file.name}「${first.row.sheet}」第 ${first.row.rowNo} 行）` : "（与题库中的题目不一致）";
+        item.file.issues.push({ kind: "conflict", sheet: item.row.sheet, rowNo: item.row.rowNo, reason: `答案冲突${location}` });
+      }
+    } else if (previous) {
+      for (const item of group) {
+        item.file.summary.duplicates++;
+        item.file.issues.push({ kind: "duplicate", sheet: item.row.sheet, rowNo: item.row.rowNo, reason: "题库中已有相同题目" });
+      }
     } else {
-      importable.push({
-        rowNo: r.rowNo,
-        sheet: r.sheet,
-        contentHash: r.contentHash,
-        data: buildQuestionData(r.input),
-      });
+      const [first, ...duplicates] = group;
+      first.file.importable.push(first.row);
+      first.file.summary.importable++;
+      for (const item of duplicates) {
+        item.file.summary.fileDups++;
+        item.file.issues.push({ kind: "fileDup", sheet: item.row.sheet, rowNo: item.row.rowNo, reason: `与 ${first.file.name}「${first.row.sheet}」第 ${first.row.rowNo} 行重复` });
+      }
     }
   }
-
-  const total = limited.length;
-  return {
-    importable,
-    duplicates,
-    fileDups,
-    invalid,
-    truncated,
-    summary: {
-      total,
-      importable: importable.length,
-      duplicates: duplicates.length,
-      fileDups: fileDups.length,
-      invalid: invalid.length,
-    },
-  };
-}
-
-// confirm 时调用：返回可导入的 Prisma 数据（直接来自 analyzeQuestionImport）
-export async function getImportableData(buf: Buffer, bankId: number) {
-  const rows = await parseQuestionWorkbook(buf);
-  return analyzeQuestionImport(rows, bankId);
+  const summary = emptySummary();
+  for (const file of results) for (const key of Object.keys(summary) as (keyof Summary)[]) summary[key] += file.summary[key];
+  return { files: results, summary };
 }

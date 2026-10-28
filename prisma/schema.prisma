@@ -144,7 +144,7 @@ model Question {
   tags          String? // 预留：逗号分隔，后续升多对多
   score         Int? // 预留：刷题不用，权威分值在 ExamQuestion
   externalId    String? // 原始资料编号，支持"重导更新"
-  contentHash   String // 去重：题型+归一化题干+答案 的 SHA1
+  contentHash   String // 历史为旧口径 SHA1；新题为 v2 身份哈希，答案冲突由应用检查
   importBatchId String? // 导入批次，支持整批回滚
 
   createdAt DateTime @default(now())

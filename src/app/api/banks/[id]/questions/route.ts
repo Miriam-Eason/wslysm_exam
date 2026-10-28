@@ -6,6 +6,7 @@ import { ok, fail, parsePagination } from "@/lib/api";
 import { requireApiRole } from "@/lib/auth-guard";
 import { questionInputSchema } from "@/lib/validations/question";
 import { buildQuestionData } from "@/lib/question-data";
+import { classifyQuestionDuplicate, InvalidQuestionIdentityError, loadBankQuestionIdentityGroups, lockQuestionBank, QuestionBankNotFoundError } from "@/lib/question-duplicates";
 import { QUESTION_TYPES, DIFFICULTIES, type QType, type Diff } from "@/lib/question";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -83,14 +84,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!parsed.success) return fail("VALIDATION", "题目校验失败", parsed.error.flatten());
 
   try {
-    const created = await prisma.question.create({
-      data: { bankId, ...buildQuestionData(parsed.data) },
-      select: { id: true },
+    const result = await prisma.$transaction(async (tx) => {
+      await lockQuestionBank(tx, bankId);
+      const currentBank = await tx.questionBank.findUnique({ where: { id: bankId }, select: { createdBy: true } });
+      if (!currentBank) return { error: "missing" } as const;
+      if (currentBank.createdBy !== g.userId) return { error: "forbidden" } as const;
+      const groups = await loadBankQuestionIdentityGroups(tx, bankId);
+      const duplicate = classifyQuestionDuplicate(groups, parsed.data);
+      if (duplicate) return { error: duplicate } as const;
+      const created = await tx.question.create({
+        data: { bankId, ...buildQuestionData(parsed.data) },
+        select: { id: true },
+      });
+      return { id: created.id } as const;
     });
-    return ok({ id: created.id }, { status: 201 });
+    if ("error" in result) {
+      if (result.error === "missing") return fail("NOT_FOUND", "题库不存在");
+      if (result.error === "forbidden") return fail("FORBIDDEN", "无权操作该题库");
+      return fail("CONFLICT", result.error === "conflict" ? "题库内已存在相同题目，但答案不同" : "题库内已存在相同题目");
+    }
+    return ok({ id: result.id }, { status: 201 });
   } catch (e) {
+    if (e instanceof QuestionBankNotFoundError) return fail("NOT_FOUND", "题库不存在");
+    if (e instanceof InvalidQuestionIdentityError) return fail("CONFLICT", `题库中题目 ${e.questionId} 的身份数据无效，无法查重，请先检查该题`);
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return fail("CONFLICT", "题库内已存在相同题目（题干与答案重复）");
+      return fail("CONFLICT", "题库内已存在相同题目");
     }
     throw e;
   }

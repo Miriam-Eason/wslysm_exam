@@ -13,6 +13,8 @@
 | Excel 导入与模板 | [import](import) 解析、预检；[templates](templates) 生成模板；题目导入复用校验与题目写入能力 |
 | 展示与响应 | [question.ts](question.ts) 提供题型与标签；[api.ts](api.ts) 提供统一业务 JSON 响应与分页 |
 
+题目新写入使用 `questionIdentityHash` 的 `v2:` 身份哈希，答案差异通过 `questionAnswerSignature` 比较；两者均可接收数据库 JSON。历史 `contentHash` 仍为旧口径，不能与 v2 直接比较，跨版本查重须读取历史题目计算身份。编辑历史题目保持原哈希；新增及编辑时锁定题库后比较新旧身份。选项内容重复由公共题目校验拒绝。
+
 ## 修改要求
 
 - 先复用上述入口；服务端数据库能力与可供客户端使用的纯函数分开，不通过公共导出把 Prisma、鉴权或导入依赖带到客户端。
