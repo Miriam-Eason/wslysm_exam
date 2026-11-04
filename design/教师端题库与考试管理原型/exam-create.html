@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:,">
+<title>新建考试/练习 · 无锡旅游商贸助考宝</title>
+<link rel="stylesheet" href="./assets/base.css">
+<link rel="stylesheet" href="./assets/b2.css">
+<link rel="stylesheet" href="./assets/exam-create.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><img src="./assets/school-logo.png" alt="无锡旅游商贸助考宝"></div>
+    <nav class="side-nav" aria-label="教师导航">
+      <a class="side-link" href="#" data-demo-link><span data-icon="grid"></span>仪表盘</a>
+      <a class="side-link" href="#" data-demo-link><span data-icon="users"></span>班级管理</a>
+      <a class="side-link" href="./dir-2-v2.html"><span data-icon="book"></span>题库管理</a>
+      <a class="side-link active" href="./exam-management.html"><span data-icon="file"></span>考试管理</a>
+    </nav>
+    <div class="side-footer">
+      <div class="user-row">
+        <div class="avatar">陈</div>
+        <div><div class="user-name">陈瑜</div><div class="user-role">酒店管理系 · 教师</div></div>
+      </div>
+      <button class="side-action" type="button" data-toast="演示中不处理密码修改">修改密码</button>
+      <button class="side-action signout" type="button" data-toast="演示中不执行退出登录">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <div class="workspace-inner create-page" id="createPage">
+      <div class="create-mobile-head">
+        <a class="back" href="./exam-management.html" aria-label="返回考试管理"><span data-icon="chevronLeft"></span></a>
+        <span class="label">新建考试/练习</span>
+        <span class="count" id="mobileStepCount">1 / 4</span>
+      </div>
+
+      <header class="create-header">
+        <div class="create-header-main">
+          <a class="create-back" href="./exam-management.html"><span data-icon="chevronLeft"></span>返回考试管理</a>
+          <h1 class="create-title">新建考试/练习</h1>
+          <p class="create-subtitle">从题库生成试卷快照，再选择参与班级。</p>
+        </div>
+        <span class="demo-tag">方案 B · 创建流程</span>
+      </header>
+
+      <nav class="create-steps" id="createSteps" aria-label="创建步骤"></nav>
+
+      <div class="mobile-progress">
+        <div class="mobile-progress-meta">
+          <strong id="mobileStepTitle">基本信息</strong>
+          <span id="mobileStepLabel">第 1 步，共 4 步</span>
+        </div>
+        <div class="mobile-progress-track"><div class="mobile-progress-fill" id="mobileProgressFill" style="width:25%"></div></div>
+      </div>
+
+      <section class="create-card" id="stepContent" aria-live="polite"></section>
+
+      <footer class="create-footer" id="createFooter">
+        <div class="footer-progress" id="footerProgress">第 1 步，共 4 步</div>
+        <div class="footer-actions">
+          <button class="button outline" id="backButton" type="button">取消</button>
+          <button class="button primary" id="nextButton" type="button">下一步<span data-icon="chevronRight"></span></button>
+        </div>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+<script src="./assets/demo-data.js"></script>
+<script src="./assets/exam-data.js"></script>
+<script src="./assets/exam-create.js"></script>
+</body>
+</html>

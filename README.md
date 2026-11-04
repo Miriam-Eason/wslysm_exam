@@ -46,6 +46,19 @@ docker compose -f docker-compose.dev.yml down -v
 
 需要从局域网访问开发服务时，在本机 `.env.local` 中设置 `DEV_ALLOWED_ORIGINS`，填写访问开发服务使用的主机名或 IP；多个值用英文逗号分隔。修改后重启 `npm run dev`。该配置仅影响 Next.js 开发资源访问，不会改变数据库绑定地址或生产配置。
 
+## 设计原型
+
+教师端题库与考试管理 UX 原型位于
+[`design/教师端题库与考试管理原型/`](design/教师端题库与考试管理原型/)。
+当前页面、设计取舍、模拟数据边界及后续待确认项见
+[`CURRENT_DEMO.md`](design/教师端题库与考试管理原型/CURRENT_DEMO.md)。
+
+该目录是独立静态 Demo，不参与 Next.js 构建。浏览时可在该目录启动临时静态服务器：
+
+```bash
+python3 -m http.server 4173 --bind 127.0.0.1
+```
+
 ## 提交前检查
 
 ```bash
