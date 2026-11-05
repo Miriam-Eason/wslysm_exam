@@ -53,11 +53,13 @@ docker compose -f docker-compose.dev.yml down -v
 当前页面、设计取舍、模拟数据边界及后续待确认项见
 [`CURRENT_DEMO.md`](design/教师端题库与考试管理原型/CURRENT_DEMO.md)。
 
-该目录是独立静态 Demo，不参与 Next.js 构建。浏览时可在该目录启动临时静态服务器：
+该目录是独立静态 Demo，不参与 Next.js 构建，也不需要启动数据库。在仓库根目录运行（需要 `python3`）：
 
 ```bash
-python3 -m http.server 4173 --bind 127.0.0.1
+npm run demo
 ```
+
+打开 [http://127.0.0.1:4173/](http://127.0.0.1:4173/)。按 `Ctrl+C` 停止服务。
 
 ## 提交前检查
 

@@ -6,11 +6,10 @@
 
 ## 浏览
 
-从目录中启动静态服务器：
+在仓库根目录启动静态服务器：
 
 ```bash
-cd /Users/frankqin/.codex/visualizations/2026/11/04/01a1a42b-2515-75e2-b130-b6f1a9e91841/bank-manager-demo/design-demos
-python3 -m http.server 4173 --bind 127.0.0.1
+npm run demo
 ```
 
 打开：
