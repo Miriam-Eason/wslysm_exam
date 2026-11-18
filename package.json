@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "demo": "python3 -m http.server 4173 --bind 127.0.0.1 --directory \"design/教师端题库与考试管理原型\"",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",

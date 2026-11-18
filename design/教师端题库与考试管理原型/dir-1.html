@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>方案 A · 检索优先型题库管理</title>
+<link rel="stylesheet" href="./assets/base.css">
+<style>
+  .demo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 24px;
+    border: 1px solid #d3d9e5;
+    border-radius: 99px;
+    padding: 1px 9px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, .82);
+    font-size: 12px;
+    line-height: 1;
+  }
+  .demo-tag::before {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    content: "";
+  }
+  .table-wrap { overflow-x: auto; }
+  .bank-table { width: 100%; min-width: 780px; border-collapse: collapse; table-layout: fixed; }
+  .bank-table col.pin-col { width: 42px; }
+  .bank-table col.subject-col { width: 126px; }
+  .bank-table col.count-col { width: 92px; }
+  .bank-table col.date-col { width: 92px; }
+  .bank-table col.action-col { width: 188px; }
+  .bank-table th {
+    height: 41px;
+    border-bottom: 1px solid rgba(193, 198, 215, .65);
+    background: #fbfbfe;
+    padding: 0 13px;
+    color: var(--muted);
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .03em;
+  }
+  .bank-table th.num, .bank-table td.num { text-align: right; }
+  .bank-table td {
+    height: 52px;
+    border-bottom: 1px solid rgba(224, 226, 237, .72);
+    padding: 0 13px;
+    vertical-align: middle;
+  }
+  .bank-table tbody tr:last-child td { border-bottom: 0; }
+  .bank-table tbody tr { transition: background .14s ease; }
+  .bank-table tbody tr:hover { background: #f8faff; }
+  .bank-row.pinned { background: #fffdf8; }
+  .bank-row.pinned:hover { background: #fffaf0; }
+  .pin-cell { padding-left: 10px !important; padding-right: 2px !important; }
+  .name-cell { min-width: 0; }
+  .bank-name {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -.005em;
+  }
+  .bank-name:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+  .bank-name .match { background: #dceeff; color: #004493; border-radius: 2px; }
+  .count-cell { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .date-cell { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .actions-cell { white-space: nowrap; }
+  .row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
+  .manage-button {
+    display: inline-flex;
+    height: 32px;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    padding: 0 8px;
+    color: var(--primary-deep);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .manage-button:hover { background: var(--primary-soft); color: var(--primary); }
+  .more-button {
+    display: inline-grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--outline);
+    cursor: pointer;
+  }
+  .more-button:hover { background: var(--surface-low); color: var(--text); }
+  .filter-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 6px;
+    color: var(--primary-deep);
+  }
+  .search-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 21px;
+    margin: -1px 1px 8px;
+  }
+  .search-meta .result-meta { font-size: 12px; }
+  .keyboard-note { display: flex; align-items: center; gap: 5px; color: var(--outline); font-size: 12px; }
+  .keyboard-note kbd {
+    display: inline-flex;
+    height: 19px;
+    align-items: center;
+    border: 1px solid #d7dbe4;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0 5px;
+    background: white;
+    font: inherit;
+    font-weight: 700;
+  }
+  .dialog-error { display: none; color: var(--danger); font-size: 12px; }
+  .dialog-error.show { display: block; }
+  .mobile-bank {
+    display: none;
+  }
+  @media (max-width: 1060px) {
+    .bank-table col.date-col, .bank-table .date-head, .bank-table .date-cell { display: none; }
+    .bank-table col.action-col { width: 156px; }
+  }
+  @media (max-width: 700px) {
+    .search-toolbar { display: grid; grid-template-columns: 1fr 1fr; }
+    .search-box { grid-column: 1 / -1; width: 100%; }
+    .search-toolbar .select-wrap, .search-toolbar .select-wrap select { width: 100%; min-width: 0; }
+    .table-wrap { display: none; }
+    .mobile-bank { display: flex; flex-direction: column; }
+    .mobile-row {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 70px;
+      border-bottom: 1px solid rgba(224, 226, 237, .78);
+      padding: 10px 11px;
+    }
+    .mobile-row:last-child { border-bottom: 0; }
+    .mobile-main { min-width: 0; }
+    .mobile-name {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .mobile-meta { display: flex; align-items: center; gap: 7px; margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .mobile-actions { display: flex; align-items: center; gap: 1px; }
+    .mobile-open { display: inline-grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--primary); }
+    .keyboard-note { display: none; }
+    .search-meta { min-height: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><img src="./assets/school-logo.png" alt="无锡旅游商贸助考宝"></div>
+    <nav class="side-nav" aria-label="教师导航">
+      <a class="side-link" href="#" data-demo-link><span data-icon="grid"></span>仪表盘</a>
+      <a class="side-link" href="#" data-demo-link><span data-icon="users"></span>班级管理</a>
+      <a class="side-link active" href="./dir-1.html"><span data-icon="book"></span>题库管理</a>
+      <a class="side-link" href="#" data-demo-link><span data-icon="file"></span>考试管理</a>
+    </nav>
+    <div class="side-footer">
+      <div class="user-row">
+        <div class="avatar">陈</div>
+        <div>
+          <div class="user-name">陈瑜</div>
+          <div class="user-role">教师</div>
+        </div>
+      </div>
+      <button class="side-action" type="button" data-toast="演示中不处理密码修改">修改密码</button>
+      <button class="side-action signout" type="button" data-toast="演示中不执行退出登录">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <div class="workspace-inner">
+      <div class="mobile-head">
+        <img src="./assets/school-logo.png" alt="无锡旅游商贸助考宝">
+        <button class="button icon ghost" type="button" aria-label="打开导航" data-toast="演示中不打开移动端导航"><span data-icon="menu"></span></button>
+      </div>
+
+      <header class="page-head">
+        <div>
+          <div class="title-line">
+            <h1>题库管理</h1>
+            <span id="totalCount" class="count-label">199 个题库</span>
+            <span class="demo-tag">方案 A · 检索优先</span>
+          </div>
+        </div>
+        <div class="page-actions">
+          <button class="button primary" id="createButton" type="button"><span data-icon="plus"></span>新建题库</button>
+        </div>
+      </header>
+
+      <section aria-label="题库筛选">
+        <div class="search-toolbar">
+          <label class="search-box" id="searchBox">
+            <span class="search-icon" data-icon="search"></span>
+            <span class="sr-only">搜索题库</span>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="搜索题库名称或科目">
+            <span class="search-hint" aria-hidden="true">/</span>
+            <button class="search-clear" id="searchClear" type="button" aria-label="清除搜索"><span data-icon="x"></span></button>
+          </label>
+          <div class="select-wrap">
+            <label class="sr-only" for="subjectFilter">按科目筛选</label>
+            <select id="subjectFilter">
+              <option value="">全部科目</option>
+            </select>
+            <span class="select-icon" data-icon="chevronDown"></span>
+          </div>
+          <div class="select-wrap">
+            <label class="sr-only" for="sortSelect">排序</label>
+            <select id="sortSelect">
+              <option value="recent">最近创建</option>
+              <option value="name">名称排序</option>
+              <option value="questions">题目数</option>
+            </select>
+            <span class="select-icon" data-icon="chevronDown"></span>
+          </div>
+        </div>
+        <div class="search-meta">
+          <div id="resultMeta" class="result-meta">显示全部 199 个题库</div>
+          <div class="keyboard-note"><kbd>/</kbd> 搜索 <span aria-hidden="true">·</span> <kbd>Esc</kbd> 清除</div>
+        </div>
+      </section>
+
+      <section class="panel" aria-live="polite">
+        <div class="table-wrap">
+          <table class="bank-table">
+            <colgroup>
+              <col class="pin-col">
+              <col>
+              <col class="subject-col">
+              <col class="count-col">
+              <col class="date-col">
+              <col class="action-col">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="pin-cell"><span class="sr-only">置顶</span></th>
+                <th>题库名称</th>
+                <th>科目</th>
+                <th class="num">题目数</th>
+                <th class="date-head">创建</th>
+                <th><span class="sr-only">操作</span></th>
+              </tr>
+            </thead>
+            <tbody id="bankRows"></tbody>
+          </table>
+        </div>
+        <div id="mobileBanks" class="mobile-bank"></div>
+        <div id="emptyState" class="empty-state" hidden>
+          <div class="empty-icon"><span data-icon="search"></span></div>
+          <div class="empty-title">没有找到题库</div>
+          <div class="empty-actions"><button class="button outline small" id="clearFilters" type="button">清除筛选</button></div>
+        </div>
+      </section>
+
+      <div class="pagination" id="pagination">
+        <div class="page-summary" id="pageSummary"></div>
+        <div class="pager" id="pager" aria-label="分页"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="menu-popover" id="rowMenu" role="menu">
+  <button class="menu-item" type="button" data-menu-action="pin"><span data-icon="star"></span><span id="pinMenuText">置顶题库</span></button>
+  <button class="menu-item" type="button" data-menu-action="edit"><span data-icon="pencil"></span>编辑题库</button>
+  <div class="menu-separator"></div>
+  <button class="menu-item danger" type="button" data-menu-action="delete"><span data-icon="trash"></span>删除题库</button>
+</div>
+
+<dialog id="bankDialog">
+  <form id="bankForm">
+    <div class="dialog-head">
+      <h2 class="dialog-title" id="bankDialogTitle">新建题库</h2>
+      <button class="dialog-close" type="button" data-close-dialog="bankDialog" aria-label="关闭"><span data-icon="x"></span></button>
+    </div>
+    <div class="dialog-body">
+      <div class="field">
+        <label for="bankNameInput">题库名称</label>
+        <input id="bankNameInput" maxlength="80" required placeholder="例如：面点2.5 综合练习">
+      </div>
+      <div class="field">
+        <label for="bankSubjectInput">科目</label>
+        <select id="bankSubjectInput"></select>
+      </div>
+      <div class="dialog-error" id="bankDialogError">请输入题库名称</div>
+    </div>
+    <div class="dialog-footer">
+      <button class="button outline" type="button" data-close-dialog="bankDialog">取消</button>
+      <button class="button primary" id="bankSubmit" type="submit">创建</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="deleteDialog">
+  <div class="dialog-head">
+    <h2 class="dialog-title">确认删除题库？</h2>
+    <button class="dialog-close" type="button" data-close-dialog="deleteDialog" aria-label="关闭"><span data-icon="x"></span></button>
+  </div>
+  <div class="dialog-body">
+    <p class="dialog-note" id="deleteNote"></p>
+  </div>
+  <div class="dialog-footer">
+    <button class="button outline" type="button" data-close-dialog="deleteDialog">取消</button>
+    <button class="button primary" id="confirmDelete" type="button" style="background:var(--danger)">确认删除</button>
+  </div>
+</dialog>
+
+<div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+<script src="./assets/demo-data.js"></script>
+<script>
+  const {
+    subjects,
+    subjectColors,
+    filterBanks,
+    sortBanks,
+    formatDate,
+    pageItems,
+    pageNumbers,
+    escapeHtml,
+    icon,
+    normalize,
+  } = window.DEMO;
+
+  function hydrateIcons() {
+    document.querySelectorAll("[data-icon]").forEach((node) => {
+      node.innerHTML = icon(node.dataset.icon, 16);
+    });
+  }
+
+  hydrateIcons();
+
+  let banks = window.DEMO.banks.map((bank) => ({ ...bank }));
+  let query = "";
+  let subject = "";
+  let sort = "recent";
+  let page = 1;
+  let dialogMode = "create";
+  let dialogBankId = null;
+  let menuBankId = null;
+  let deleteBankId = null;
+  const pageSize = 12;
+
+  const els = {
+    totalCount: document.getElementById("totalCount"),
+    searchBox: document.getElementById("searchBox"),
+    searchInput: document.getElementById("searchInput"),
+    searchClear: document.getElementById("searchClear"),
+    subjectFilter: document.getElementById("subjectFilter"),
+    sortSelect: document.getElementById("sortSelect"),
+    resultMeta: document.getElementById("resultMeta"),
+    bankRows: document.getElementById("bankRows"),
+    mobileBanks: document.getElementById("mobileBanks"),
+    emptyState: document.getElementById("emptyState"),
+    pagination: document.getElementById("pagination"),
+    pageSummary: document.getElementById("pageSummary"),
+    pager: document.getElementById("pager"),
+    rowMenu: document.getElementById("rowMenu"),
+    pinMenuText: document.getElementById("pinMenuText"),
+    createButton: document.getElementById("createButton"),
+    clearFilters: document.getElementById("clearFilters"),
+    bankDialog: document.getElementById("bankDialog"),
+    bankDialogTitle: document.getElementById("bankDialogTitle"),
+    bankDialogError: document.getElementById("bankDialogError"),
+    bankNameInput: document.getElementById("bankNameInput"),
+    bankSubjectInput: document.getElementById("bankSubjectInput"),
+    bankSubmit: document.getElementById("bankSubmit"),
+    deleteDialog: document.getElementById("deleteDialog"),
+    deleteNote: document.getElementById("deleteNote"),
+    confirmDelete: document.getElementById("confirmDelete"),
+    toastRegion: document.getElementById("toastRegion"),
+  };
+
+  for (const item of subjects) {
+    els.subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`);
+    els.bankSubjectInput.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`);
+  }
+
+  function highlightedName(name) {
+    const tokens = normalize(query).split(" ").filter(Boolean);
+    if (!tokens.length) return escapeHtml(name);
+    let html = escapeHtml(name);
+    for (const token of tokens) {
+      const safe = escapeHtml(token);
+      if (!safe) continue;
+      const regex = new RegExp(`(${safe.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+      html = html.replace(regex, '<span class="match">$1</span>');
+    }
+    return html;
+  }
+
+  function subjectChip(value) {
+    if (!value) return '<span class="subject-none">未归类</span>';
+    const colors = subjectColors[value] || { bg: "#eef0f5", fg: "#414755" };
+    return `<span class="subject-chip" style="background:${colors.bg};color:${colors.fg}">${escapeHtml(value)}</span>`;
+  }
+
+  function render() {
+    const filtered = sortBanks(filterBanks(banks, query, subject), sort);
+    const paging = pageItems(filtered.length, page, pageSize);
+    page = paging.current;
+    const visible = filtered.slice(paging.start, paging.end);
+
+    els.totalCount.textContent = `${banks.length} 个题库`;
+    els.searchBox.classList.toggle("has-query", Boolean(query));
+    els.resultMeta.textContent = query || subject
+      ? `找到 ${filtered.length} 个题库`
+      : `显示全部 ${banks.length} 个题库`;
+    els.emptyState.hidden = filtered.length !== 0;
+
+    els.bankRows.innerHTML = visible.map((bank) => `
+      <tr class="bank-row${bank.pinned ? " pinned" : ""}" data-bank-id="${bank.id}">
+        <td class="pin-cell">
+          <button class="pin-button${bank.pinned ? " active" : ""}" type="button" data-action="pin" data-id="${bank.id}" aria-label="${bank.pinned ? "取消置顶" : "置顶"} ${escapeHtml(bank.name)}" title="${bank.pinned ? "取消置顶" : "置顶"}">${icon("star", 15)}</button>
+        </td>
+        <td class="name-cell"><button class="bank-name" type="button" data-action="open" data-id="${bank.id}" title="${escapeHtml(bank.name)}">${highlightedName(bank.name)}</button></td>
+        <td>${subjectChip(bank.subject)}</td>
+        <td class="num count-cell">${bank.questionCount} 道</td>
+        <td class="date-cell">${formatDate(bank.createdAt)}</td>
+        <td class="actions-cell">
+          <div class="row-actions">
+            <button class="manage-button" type="button" data-action="open" data-id="${bank.id}">管理题目 ${icon("arrow", 14)}</button>
+            <button class="more-button" type="button" data-action="more" data-id="${bank.id}" aria-label="${escapeHtml(bank.name)} 的更多操作">${icon("more", 17)}</button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    els.mobileBanks.innerHTML = visible.map((bank) => `
+      <div class="mobile-row">
+        <button class="pin-button${bank.pinned ? " active" : ""}" type="button" data-action="pin" data-id="${bank.id}" aria-label="${bank.pinned ? "取消置顶" : "置顶"}">${icon("star", 15)}</button>
+        <div class="mobile-main">
+          <button class="mobile-name bank-name" type="button" data-action="open" data-id="${bank.id}">${highlightedName(bank.name)}</button>
+          <div class="mobile-meta">
+            ${subjectChip(bank.subject)}
+            <span>${bank.questionCount} 道</span>
+            <span>${formatDate(bank.createdAt)}</span>
+          </div>
+        </div>
+        <div class="mobile-actions">
+          <button class="mobile-open" type="button" data-action="open" data-id="${bank.id}" aria-label="管理题目">${icon("arrow", 16)}</button>
+          <button class="more-button" type="button" data-action="more" data-id="${bank.id}" aria-label="更多操作">${icon("more", 17)}</button>
+        </div>
+      </div>
+    `).join("");
+
+    const showPaging = filtered.length > pageSize;
+    els.pagination.style.display = filtered.length ? "flex" : "none";
+    els.pageSummary.textContent = filtered.length
+      ? `第 ${paging.current} / ${paging.totalPages} 页 · 共 ${filtered.length} 个题库`
+      : "";
+    els.pager.innerHTML = !showPaging ? "" : `
+      <button class="page-button" type="button" data-page="${paging.current - 1}" ${paging.current === 1 ? "disabled" : ""} aria-label="上一页">${icon("chevronLeft", 16)}</button>
+      ${pageNumbers(paging.current, paging.totalPages).map((item) => item === "…"
+        ? '<span class="page-gap">…</span>'
+        : `<button class="page-button${item === paging.current ? " active" : ""}" type="button" data-page="${item}" aria-current="${item === paging.current ? "page" : "false"}">${item}</button>`
+      ).join("")}
+      <button class="page-button" type="button" data-page="${paging.current + 1}" ${paging.current === paging.totalPages ? "disabled" : ""} aria-label="下一页">${icon("chevronRight", 16)}</button>
+    `;
+  }
+
+  function setPage(nextPage) {
+    page = nextPage;
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function toast(message, type = "success") {
+    const node = document.createElement("div");
+    node.className = `toast ${type}`;
+    node.innerHTML = `${icon(type === "success" ? "check" : "search", 16)}<span>${escapeHtml(message)}</span>`;
+    els.toastRegion.appendChild(node);
+    window.setTimeout(() => node.remove(), 2600);
+  }
+
+  function openBankMenu(button, bankId) {
+    menuBankId = bankId;
+    const bank = banks.find((item) => item.id === bankId);
+    if (!bank) return;
+    els.pinMenuText.textContent = bank.pinned ? "取消置顶" : "置顶题库";
+    els.rowMenu.classList.add("open");
+    const rect = button.getBoundingClientRect();
+    const menuRect = els.rowMenu.getBoundingClientRect();
+    const left = Math.min(window.innerWidth - menuRect.width - 10, Math.max(10, rect.right - menuRect.width));
+    const below = rect.bottom + 6;
+    const top = below + menuRect.height > window.innerHeight - 10 ? rect.top - menuRect.height - 6 : below;
+    els.rowMenu.style.left = `${left}px`;
+    els.rowMenu.style.top = `${Math.max(10, top)}px`;
+    els.rowMenu.querySelector(".menu-item").focus();
+  }
+
+  function closeMenu() {
+    els.rowMenu.classList.remove("open");
+    menuBankId = null;
+  }
+
+  function togglePin(id) {
+    const bank = banks.find((item) => item.id === id);
+    if (!bank) return;
+    bank.pinned = !bank.pinned;
+    toast(bank.pinned ? `已置顶「${bank.name}」` : `已取消置顶「${bank.name}」`);
+    render();
+  }
+
+  function openBank(id) {
+    const bank = banks.find((item) => item.id === id);
+    if (!bank) return;
+    toast(`演示中会进入「${bank.name}」的题目列表`);
+  }
+
+  function openBankDialog(mode, bank = null) {
+    dialogMode = mode;
+    dialogBankId = bank?.id ?? null;
+    els.bankDialogTitle.textContent = mode === "edit" ? "编辑题库" : "新建题库";
+    els.bankSubmit.textContent = mode === "edit" ? "保存" : "创建";
+    els.bankNameInput.value = bank?.name ?? "";
+    els.bankSubjectInput.value = bank?.subject ?? "烹饪科目组";
+    els.bankDialogError.classList.remove("show");
+    els.bankDialog.showModal();
+    window.setTimeout(() => els.bankNameInput.focus(), 0);
+  }
+
+  function openDeleteDialog(bank) {
+    deleteBankId = bank.id;
+    els.deleteNote.innerHTML = `将删除「<strong>${escapeHtml(bank.name)}</strong>」及其 ${bank.questionCount} 道题目。已组卷的试卷快照不受影响。此操作不可撤销。`;
+    els.deleteDialog.showModal();
+  }
+
+  function applyFilters() {
+    query = els.searchInput.value.trim();
+    page = 1;
+    render();
+  }
+
+  els.searchInput.addEventListener("input", applyFilters);
+  els.searchClear.addEventListener("click", () => {
+    els.searchInput.value = "";
+    applyFilters();
+    els.searchInput.focus();
+  });
+  els.subjectFilter.addEventListener("change", () => {
+    subject = els.subjectFilter.value;
+    page = 1;
+    render();
+  });
+  els.sortSelect.addEventListener("change", () => {
+    sort = els.sortSelect.value;
+    page = 1;
+    render();
+  });
+  els.clearFilters.addEventListener("click", () => {
+    query = "";
+    subject = "";
+    els.searchInput.value = "";
+    els.subjectFilter.value = "";
+    page = 1;
+    render();
+    els.searchInput.focus();
+  });
+
+  document.addEventListener("click", (event) => {
+    const actionNode = event.target.closest("[data-action]");
+    if (actionNode) {
+      const id = Number(actionNode.dataset.id);
+      const action = actionNode.dataset.action;
+      if (action === "pin") togglePin(id);
+      if (action === "open") openBank(id);
+      if (action === "more") {
+        event.stopPropagation();
+        if (menuBankId === id && els.rowMenu.classList.contains("open")) closeMenu();
+        else openBankMenu(actionNode, id);
+      }
+      return;
+    }
+
+    const pageNode = event.target.closest("[data-page]");
+    if (pageNode) {
+      setPage(Number(pageNode.dataset.page));
+      return;
+    }
+
+    const toastNode = event.target.closest("[data-toast]");
+    if (toastNode) {
+      event.preventDefault();
+      toast(toastNode.dataset.toast);
+      return;
+    }
+
+    const demoLink = event.target.closest("[data-demo-link]");
+    if (demoLink) {
+      event.preventDefault();
+      toast("演示只包含题库管理页");
+      return;
+    }
+
+    const closeButton = event.target.closest("[data-close-dialog]");
+    if (closeButton) {
+      document.getElementById(closeButton.dataset.closeDialog).close();
+      return;
+    }
+
+    if (!event.target.closest("#rowMenu") && !event.target.closest("[data-action='more']")) closeMenu();
+  });
+
+  els.rowMenu.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-menu-action]");
+    if (!button || !menuBankId) return;
+    const bank = banks.find((item) => item.id === menuBankId);
+    if (!bank) return;
+    const action = button.dataset.menuAction;
+    closeMenu();
+    if (action === "pin") togglePin(bank.id);
+    if (action === "edit") openBankDialog("edit", bank);
+    if (action === "delete") openDeleteDialog(bank);
+  });
+
+  els.createButton.addEventListener("click", () => openBankDialog("create"));
+  els.bankForm?.addEventListener("submit", () => {});
+  document.getElementById("bankForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = els.bankNameInput.value.trim();
+    if (!name) {
+      els.bankDialogError.classList.add("show");
+      els.bankNameInput.focus();
+      return;
+    }
+    if (dialogMode === "edit") {
+      const bank = banks.find((item) => item.id === dialogBankId);
+      if (bank) {
+        bank.name = name;
+        bank.subject = els.bankSubjectInput.value;
+        toast("题库信息已保存");
+      }
+    } else {
+      const nextId = Math.max(0, ...banks.map((bank) => bank.id)) + 1;
+      banks.unshift({
+        id: nextId,
+        name,
+        subject: els.bankSubjectInput.value,
+        questionCount: 0,
+        createdAt: new Date().toISOString().slice(0, 10),
+        pinned: false,
+      });
+      toast(`已创建「${name}」`);
+    }
+    els.bankDialog.close();
+    page = 1;
+    render();
+  });
+
+  els.confirmDelete.addEventListener("click", () => {
+    const bank = banks.find((item) => item.id === deleteBankId);
+    if (!bank) return;
+    banks = banks.filter((item) => item.id !== deleteBankId);
+    els.deleteDialog.close();
+    toast(`已删除「${bank.name}」`);
+    render();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+    if (event.key === "/" && !editing) {
+      event.preventDefault();
+      els.searchInput.focus();
+    }
+    if (event.key === "Escape") {
+      if (els.rowMenu.classList.contains("open")) closeMenu();
+      if (document.activeElement === els.searchInput && els.searchInput.value) {
+        els.searchInput.value = "";
+        applyFilters();
+        els.searchInput.blur();
+      }
+    }
+  });
+
+  window.addEventListener("resize", closeMenu);
+  window.addEventListener("scroll", closeMenu, true);
+  render();
+</script>
+</body>
+</html>

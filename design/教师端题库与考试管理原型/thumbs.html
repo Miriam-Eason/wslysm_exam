@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>题库管理 · 六个候选方向</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e8eaf0; color: #181c23; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .page { width: min(1440px, 100%); margin: 0 auto; padding: 40px; }
+  h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: -.02em; }
+  .sub { margin: 0 0 28px; color: #5e6473; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .candidate { background: #fff; border: 1px solid rgba(113,119,134,.3); border-radius: 18px; padding: 12px; box-shadow: 0 8px 24px rgba(36,52,83,.06); }
+  .label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .no { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 8px; background: #eef0f5; color: #5e6473; font-size: 12px; font-weight: 700; }
+  .label strong { font-size: 13px; }
+  .label span { margin-left: auto; color: #7b8190; font-size: 12px; }
+  .thumb { height: 300px; border-radius: 12px; overflow: hidden; border: 1px solid #dfe3ec; background: #f8f9fd; position: relative; }
+  .shell { display: flex; height: 100%; }
+  .rail { width: 25%; background: #eef1fa; padding: 12px 9px; }
+  .logo { width: 70%; height: 10px; border-radius: 4px; background: #1f2a3d; margin-bottom: 18px; opacity:.84; }
+  .nav { height: 17px; border-radius: 5px; margin-bottom: 5px; background: #dde3f1; }
+  .nav.on { background: #d9ebff; border-left: 3px solid #007aff; }
+  .main { flex: 1; padding: 16px; min-width: 0; }
+  .title { width: 32%; height: 14px; border-radius: 4px; background: #252b37; margin-bottom: 12px; }
+  .bar { height: 28px; border-radius: 7px; background: #fff; border: 1px solid #d3d9e5; margin-bottom: 10px; }
+  .bar.dark { background: #11151d; border-color: #202632; }
+  .stats { display: flex; gap: 8px; margin-bottom: 10px; }
+  .pill { height: 23px; border-radius: 99px; flex: 1; background: #e9f3ff; }
+  .rows { overflow: hidden; border-radius: 9px; border: 1px solid #dce1eb; background: #fff; }
+  .row { display: flex; gap: 8px; align-items: center; height: 32px; border-bottom: 1px solid #edf0f5; padding: 0 10px; }
+  .row:last-child { border-bottom: 0; }
+  .name { flex: 1; height: 6px; border-radius: 99px; background: #5e6473; }
+  .m { width: 28px; height: 5px; border-radius: 99px; background: #b4bdcd; }
+  .num { width: 16px; height: 5px; border-radius: 99px; background: #b4bdcd; }
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .card { min-height: 60px; border-radius: 10px; border: 1px solid #dce1eb; background: #fff; padding: 9px; }
+  .line { height: 6px; border-radius: 99px; background: #656b78; margin-bottom: 7px; }
+  .line.short { width: 60%; background: #b4bdcd; }
+  .split { display: grid; grid-template-columns: 32% 1fr; height: calc(100% - 41px); border: 1px solid #dce1eb; border-radius: 9px; overflow: hidden; background: #fff; }
+  .facet { background: #f4f6fb; border-right: 1px solid #dce1eb; padding: 10px; }
+  .facet .line { height: 8px; margin-bottom: 10px; }
+  .facet .row { padding: 0; height: 25px; border: 0; }
+  .catalog { padding: 14px; }
+  .groupbar { height: 16px; border-radius: 4px; background: #e7f1ff; margin: 8px 0; }
+  .catalog .card { min-height: 42px; padding: 7px; }
+  .darkmesh { background: #080b11; border-color: #1b202b; }
+  .darkmesh .main { background: linear-gradient(135deg, rgba(0,122,255,.12), transparent 60%); }
+  .darkmesh .title { background: #f1f4fb; }
+  .darkmesh .bar { background: #121722; border-color: #27303f; }
+  .darkmesh .row { border-color: #1c222d; background: #0e131c; }
+  .darkmesh .name { background: #dce5f6; }
+  .darkmesh .m, .darkmesh .num { background: #4c586c; }
+  .deco { background: #fbf9f5; }
+  .deco .rail { background: #15352f; }
+  .deco .nav { background: #284940; }
+  .deco .nav.on { background: #e7c873; border-left-color: #e7c873; }
+  .deco .groupbar:nth-of-type(2n) { background: #f4e5bd; }
+  .deco .groupbar:nth-of-type(2n+1) { background: #dbe9e4; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 680px) { .page { padding: 20px; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <h1>题库管理 · 六个候选方向</h1>
+  <p class="sub">同一份 199 条题库内容，不同查找结构。前三张入选完整交互 Demo。</p>
+  <div class="grid">
+    <article class="candidate">
+      <div class="label"><span class="no">01</span><strong>功能主义索引</strong><span>最佳设计师 · Rams</span></div>
+      <div class="thumb"><div class="shell"><div class="rail"><div class="logo"></div><div class="nav"></div><div class="nav"></div><div class="nav on"></div><div class="nav"></div></div><div class="main"><div class="title"></div><div class="bar"></div><div class="rows"><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div></div></div></div></div>
+    </article>
+    <article class="candidate">
+      <div class="label"><span class="no">02</span><strong>留白式目录</strong><span>最佳设计师 · 原研哉</span></div>
+      <div class="thumb"><div class="shell"><div class="rail"><div class="logo"></div><div class="nav"></div><div class="nav"></div><div class="nav on"></div><div class="nav"></div></div><div class="main" style="padding:24px"><div class="title"></div><div class="bar"></div><div class="groupbar" style="margin-top:22px"></div><div class="rows"><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div></div><div class="groupbar" style="margin-top:18px"></div><div class="rows"><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div></div></div></div></div>
+    </article>
+    <article class="candidate">
+      <div class="label"><span class="no">03</span><strong>工作区列表</strong><span>现实参照 · Linear</span></div>
+      <div class="thumb"><div class="shell"><div class="rail"><div class="logo"></div><div class="nav"></div><div class="nav"></div><div class="nav on"></div><div class="nav"></div></div><div class="main"><div class="title"></div><div class="bar dark"></div><div class="stats"><div class="pill"></div><div class="pill"></div><div class="pill"></div></div><div class="rows"><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div></div></div></div></div>
+    </article>
+    <article class="candidate">
+      <div class="label"><span class="no">04</span><strong>课程导航</strong><span>现实参照 · Finder</span></div>
+      <div class="thumb"><div class="shell"><div class="rail"><div class="logo"></div><div class="nav"></div><div class="nav"></div><div class="nav on"></div><div class="nav"></div></div><div class="main"><div class="title"></div><div class="bar"></div><div class="split"><div class="facet"><div class="line"></div><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div></div><div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="m"></div><div class="num"></div></div></div></div></div></div></div>
+    </article>
+    <article class="candidate">
+      <div class="label"><span class="no">05</span><strong>焦点搜索</strong><span>秒轮 · 08 电影声波</span></div>
+      <div class="thumb darkmesh"><div class="shell"><div class="rail" style="background:#070a0f"><div class="logo" style="background:#5d6675"></div><div class="nav" style="background:#161b24"></div><div class="nav" style="background:#161b24"></div><div class="nav" style="background:#16304a"></div></div><div class="main"><div class="title"></div><div class="bar"></div><div style="height:40px"></div><div class="rows"><div class="row"><div class="name"></div><div class="num"></div></div><div class="row"><div class="name"></div><div class="num"></div></div><div class="row" style="opacity:.6"><div class="name"></div><div class="num"></div></div><div class="row" style="opacity:.3"><div class="name"></div><div class="num"></div></div></div></div></div></div>
+    </article>
+    <article class="candidate">
+      <div class="label"><span class="no">06</span><strong>分类书架</strong><span>秒轮 · 04 几何秩序</span></div>
+      <div class="thumb deco"><div class="shell"><div class="rail"><div class="logo" style="background:#f3e9cc"></div><div class="nav"></div><div class="nav"></div><div class="nav on"></div><div class="nav"></div></div><div class="main" style="padding:12px"><div class="title" style="background:#2b473e"></div><div class="bar"></div><div class="catalog"><div class="groupbar"></div><div class="cards"><div class="card"><div class="line"></div><div class="line short"></div></div><div class="card"><div class="line"></div><div class="line short"></div></div><div class="card"><div class="line"></div><div class="line short"></div></div><div class="card"><div class="line"></div><div class="line short"></div></div></div><div class="groupbar"></div><div class="cards"><div class="card"><div class="line"></div><div class="line short"></div></div><div class="card"><div class="line"></div><div class="line short"></div></div></div></div></div></div></div>
+    </article>
+  </div>
+</main>
+</body>
+</html>

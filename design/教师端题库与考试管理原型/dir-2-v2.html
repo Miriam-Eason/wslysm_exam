@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:,">
+<title>方案 B · 课程导航型题库管理 · 第二版</title>
+<link rel="stylesheet" href="./assets/base.css">
+<link rel="stylesheet" href="./assets/b2.css">
+</head>
+<body>
+<div class="app-shell">
+  <div class="nav-scrim" id="navScrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="./assets/school-logo.png" alt="无锡旅游商贸助考宝">
+      <button class="drawer-close" id="navClose" type="button" aria-label="关闭导航"><span data-icon="x"></span></button>
+    </div>
+    <nav class="side-nav" aria-label="教师导航">
+      <a class="side-link" href="#" data-demo-link><span data-icon="grid"></span>仪表盘</a>
+      <a class="side-link" href="#" data-demo-link><span data-icon="users"></span>班级管理</a>
+      <a class="side-link active" href="./dir-2-v2.html"><span data-icon="book"></span>题库管理</a>
+      <a class="side-link" href="./exam-management.html"><span data-icon="file"></span>考试管理</a>
+    </nav>
+    <div class="side-footer">
+      <div class="user-row">
+        <div class="avatar">陈</div>
+        <div>
+          <div class="user-name">陈瑜</div>
+          <div class="user-role">酒店管理系 · 教师</div>
+        </div>
+      </div>
+      <button class="side-action" type="button" data-toast="演示中不处理密码修改">修改密码</button>
+      <button class="side-action signout" type="button" data-toast="演示中不执行退出登录">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <div class="workspace-inner">
+      <header class="mobile-head">
+        <button class="nav-button" id="navOpen" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="sidebar"><span data-icon="menu"></span></button>
+        <img class="mobile-logo" src="./assets/school-logo.png" alt="无锡旅游商贸助考宝">
+        <button class="mobile-avatar" type="button" data-toast="陈瑜 · 酒店管理系教师" aria-label="当前账号：陈瑜">陈</button>
+      </header>
+
+      <header class="page-head">
+        <div class="title-line">
+          <h1>题库管理</h1>
+          <span id="totalCount" class="count-label">199 个题库</span>
+          <span class="demo-tag">方案 B · 已迭代</span>
+        </div>
+        <div class="page-actions">
+          <button class="button soft" id="findShared" type="button"><span data-icon="share"></span><span class="find-shared-label">查找系部题库</span></button>
+          <button class="button primary" id="createButton" type="button" aria-label="新建题库"><span data-icon="plus"></span><span class="new-label">新建题库</span></button>
+        </div>
+      </header>
+
+      <div class="mobile-scope-tabs" id="mobileScopeTabs" aria-label="题库范围">
+        <button class="mobile-scope-tab active" type="button" data-scope="own" aria-pressed="true">
+          我的题库 <span data-scope-count="own">199</span>
+        </button>
+        <button class="mobile-scope-tab" type="button" data-scope="shared" aria-pressed="false">
+          系部共享 <span data-scope-count="shared">23</span>
+        </button>
+      </div>
+
+      <section aria-label="题库筛选">
+        <div class="search-toolbar">
+          <label class="search-box" id="searchBox">
+            <span class="search-icon" data-icon="search"></span>
+            <span class="sr-only">搜索题库</span>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="搜索题库、科目或创建教师">
+            <span class="search-hint" aria-hidden="true">/</span>
+            <button class="search-clear" id="searchClear" type="button" aria-label="清除搜索"><span data-icon="x"></span></button>
+          </label>
+          <button class="control-button" type="button" data-menu="sort" aria-haspopup="listbox" aria-expanded="false">
+            <span data-icon="sort"></span>
+            <span class="control-label" data-sort-label>最近创建</span>
+            <span class="control-chevron" data-icon="chevronDown"></span>
+          </button>
+        </div>
+
+        <div class="mobile-filter-row">
+          <button class="control-button mobile-filter-trigger" type="button" data-menu="subject" aria-haspopup="listbox" aria-expanded="false">
+            <span class="control-dot" data-subject-dot></span>
+            <span class="control-label" data-subject-label>全部科目</span>
+            <span class="control-chevron" data-icon="chevronDown"></span>
+          </button>
+          <button class="control-button mobile-filter-trigger" type="button" data-menu="sort" aria-haspopup="listbox" aria-expanded="false">
+            <span data-icon="sort"></span>
+            <span class="control-label" data-sort-label>最近创建</span>
+            <span class="control-chevron" data-icon="chevronDown"></span>
+          </button>
+        </div>
+      </section>
+
+      <div class="navigator-layout">
+        <aside class="facets" id="facets" aria-label="按范围与科目浏览"></aside>
+
+        <section class="result-panel" aria-live="polite">
+          <div class="result-head">
+            <div class="result-title"><span id="resultTitle">我的题库</span><small id="resultCount">199 个</small></div>
+            <span class="scope-state" id="scopeState">可编辑</span>
+          </div>
+          <div class="bank-list" id="bankList"></div>
+          <div class="empty-state" id="emptyState" hidden>
+            <div class="empty-icon"><span data-icon="search"></span></div>
+            <div class="empty-title">没有找到题库</div>
+            <button class="button outline small" type="button" data-clear-empty>清除筛选</button>
+          </div>
+          <div class="pagination" id="pagination">
+            <div class="page-summary" id="pageSummary"></div>
+            <div class="pager" id="pager" aria-label="分页"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="command-scrim" id="commandScrim"></div>
+<div class="command-popover" id="commandPopover" role="listbox"></div>
+
+<div class="menu-popover" id="rowMenu" role="menu">
+  <button class="menu-item" type="button" data-menu-action="pin"><span data-icon="star"></span><span id="pinMenuText">置顶题库</span></button>
+  <button class="menu-item" type="button" data-menu-action="edit"><span data-icon="pencil"></span>编辑题库</button>
+  <div class="menu-separator"></div>
+  <button class="menu-item danger" type="button" data-menu-action="delete"><span data-icon="trash"></span>删除题库</button>
+</div>
+
+<dialog id="bankDialog">
+  <form id="bankForm">
+    <div class="dialog-head">
+      <h2 class="dialog-title" id="bankDialogTitle">新建题库</h2>
+      <button class="dialog-close" type="button" data-close-dialog="bankDialog" aria-label="关闭"><span data-icon="x"></span></button>
+    </div>
+    <div class="dialog-body">
+      <div class="field">
+        <label for="bankNameInput">题库名称</label>
+        <input id="bankNameInput" maxlength="80" required placeholder="例如：面点2.5 综合练习">
+      </div>
+      <div class="field">
+        <label for="bankSubjectInput">科目</label>
+        <div class="subject-combobox" id="subjectCombobox">
+          <div class="subject-control" id="subjectControl">
+            <span class="subject-dot" id="subjectDot"></span>
+            <input id="bankSubjectInput" type="text" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="subjectOptions" autocomplete="off" placeholder="选择已有科目，或输入新科目">
+            <button class="chevron-button" id="subjectToggle" type="button" aria-label="展开科目列表"><span data-icon="chevronDown"></span></button>
+          </div>
+          <div class="subject-options" id="subjectOptions" role="listbox"></div>
+        </div>
+        <div class="dialog-error" id="bankDialogError"></div>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="button outline" type="button" data-close-dialog="bankDialog">取消</button>
+      <button class="button primary" id="bankSubmit" type="submit">创建</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="deleteDialog">
+  <div class="dialog-head">
+    <h2 class="dialog-title">确认删除题库？</h2>
+    <button class="dialog-close" type="button" data-close-dialog="deleteDialog" aria-label="关闭"><span data-icon="x"></span></button>
+  </div>
+  <div class="dialog-body"><p class="dialog-note" id="deleteNote"></p></div>
+  <div class="dialog-footer">
+    <button class="button outline" type="button" data-close-dialog="deleteDialog">取消</button>
+    <button class="button primary" id="confirmDelete" type="button" style="background:var(--danger)">确认删除</button>
+  </div>
+</dialog>
+
+<div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+<script src="./assets/demo-data.js"></script>
+<script src="./assets/b2.js"></script>
+</body>
+</html>

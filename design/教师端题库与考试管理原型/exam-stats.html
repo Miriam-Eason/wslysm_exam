@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:,">
+<title>成绩统计 · 无锡旅游商贸助考宝</title>
+<link rel="stylesheet" href="./assets/base.css">
+<link rel="stylesheet" href="./assets/b2.css">
+<link rel="stylesheet" href="./assets/exam-stats.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><img src="./assets/school-logo.png" alt="无锡旅游商贸助考宝"></div>
+    <nav class="side-nav" aria-label="教师导航">
+      <a class="side-link" href="#" data-demo-link><span data-icon="grid"></span>仪表盘</a>
+      <a class="side-link" href="#" data-demo-link><span data-icon="users"></span>班级管理</a>
+      <a class="side-link" href="./dir-2-v2.html"><span data-icon="book"></span>题库管理</a>
+      <a class="side-link active" href="./exam-management.html"><span data-icon="file"></span>考试管理</a>
+    </nav>
+    <div class="side-footer">
+      <div class="user-row">
+        <div class="avatar">陈</div>
+        <div><div class="user-name">陈瑜</div><div class="user-role">酒店管理系 · 教师</div></div>
+      </div>
+      <button class="side-action" type="button" data-toast="演示中不处理密码修改">修改密码</button>
+      <button class="side-action signout" type="button" data-toast="演示中不执行退出登录">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <div class="workspace-inner">
+      <div class="stats-mobile-head">
+        <a class="back" href="./exam-management.html" aria-label="返回考试管理"><span data-icon="chevronLeft"></span></a>
+        <span class="label">成绩统计</span>
+        <span style="width:36px" aria-hidden="true"></span>
+      </div>
+
+      <div class="stats-page">
+        <a class="stats-back" href="./exam-management.html"><span data-icon="chevronLeft"></span>返回考试管理</a>
+
+        <header class="stats-heading">
+          <div class="stats-heading-main">
+            <div class="stats-kicker">成绩统计</div>
+            <h1 class="stats-title" id="examTitle">考试名称</h1>
+            <div class="stats-sub" id="examMeta"></div>
+          </div>
+        </header>
+
+        <nav class="stats-jump" aria-label="统计页导航">
+          <a href="#overview">概览</a>
+          <a href="#score-buckets">分数段</a>
+          <a href="#question-stats">题目</a>
+          <a href="#student-scores">学生</a>
+        </nav>
+
+        <section class="kpi-grid" id="overview" aria-label="关键指标"></section>
+
+        <section class="stats-card" id="score-buckets">
+          <div class="stats-card-head">
+            <div>
+              <h2 class="stats-card-title">分数段分布</h2>
+              <p class="stats-card-sub">按满分百分比分段，取每人最近一次已提交作答</p>
+            </div>
+          </div>
+          <div class="stats-card-body" id="scoreBuckets"></div>
+        </section>
+
+        <section class="stats-card" id="question-stats">
+          <div class="stats-card-head">
+            <div>
+              <h2 class="stats-card-title">每题作答情况</h2>
+              <p class="stats-card-sub">准确率 = 答对人数 / 已提交人数</p>
+            </div>
+          </div>
+          <div class="stats-card-body">
+            <div class="question-stat-list" id="questionStats"></div>
+          </div>
+        </section>
+
+        <section class="stats-card" id="student-scores">
+          <div class="stats-card-head">
+            <div>
+              <h2 class="stats-card-title">学生成绩</h2>
+              <p class="stats-card-sub" id="studentSummary"></p>
+            </div>
+          </div>
+          <div class="stats-card-body">
+            <div class="students-toolbar">
+              <span>按最近一次提交得分排序</span>
+              <span id="studentCountLabel"></span>
+            </div>
+            <div class="student-list" id="studentList"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<dialog class="detail-sheet" id="studentDetail">
+  <div class="detail-sheet-inner">
+    <div class="detail-sheet-head">
+      <div>
+        <h2 class="detail-sheet-title" id="studentDetailTitle">学生详情</h2>
+        <div class="detail-sheet-sub" id="studentDetailSub"></div>
+      </div>
+      <button class="detail-sheet-close" type="button" id="closeStudentDetail" aria-label="关闭学生详情"><span data-icon="x"></span></button>
+    </div>
+    <div class="detail-sheet-body" id="studentDetailBody"></div>
+  </div>
+</dialog>
+
+<div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+<script src="./assets/demo-data.js"></script>
+<script src="./assets/exam-data.js"></script>
+<script src="./assets/exam-stats.js"></script>
+</body>
+</html>
